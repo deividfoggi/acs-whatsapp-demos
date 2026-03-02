@@ -25,6 +25,14 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Public config endpoint — exposes non-sensitive settings for the frontend
+app.get("/api/config", (_req, res) => {
+  res.json({
+    success: true,
+    data: { companyName: CONFIG.COMPANY_NAME },
+  });
+});
+
 // API Routes
 app.use("/api/students", studentsRouter);
 app.use("/api/students", feesRouter);
@@ -62,7 +70,7 @@ app.use(
 // Start server
 app.listen(CONFIG.PORT, () => {
   console.log(
-    `🚀 TheFoggi Consultancy API running on port ${CONFIG.PORT} (${CONFIG.NODE_ENV})`
+    `🚀 ${CONFIG.COMPANY_NAME} API running on port ${CONFIG.PORT} (${CONFIG.NODE_ENV})`
   );
   console.log(`   Health: http://localhost:${CONFIG.PORT}/api/health`);
   console.log(`   Demos:  http://localhost:${CONFIG.PORT}/`);

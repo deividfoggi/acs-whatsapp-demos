@@ -13,6 +13,9 @@ export const CONFIG = {
   /** WhatsApp channel registration GUID */
   ACS_CHANNEL_REGISTRATION_ID: process.env.ACS_CHANNEL_REGISTRATION_ID ?? "",
 
+  /** Company name displayed in the UI and outbound messages */
+  COMPANY_NAME: process.env.COMPANY_NAME ?? "",
+
   /** Server port */
   PORT: parseInt(process.env.PORT ?? "3000", 10),
 
@@ -30,6 +33,7 @@ export function validateConfig(): void {
   const required: Array<keyof typeof CONFIG> = [
     "ACS_CONNECTION_STRING",
     "ACS_CHANNEL_REGISTRATION_ID",
+    "COMPANY_NAME",
   ];
 
   const missing = required.filter((key) => !CONFIG[key]);

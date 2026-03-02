@@ -1,16 +1,16 @@
 ---
 name: event-handler
-description: "Event Grid webhook handling — ACS incoming messages, delivery receipts, and Event Grid subscription validation for TheFoggi Consultancy WhatsApp demos"
+description: "Event Grid webhook handling — ACS incoming messages, delivery receipts, and Event Grid subscription validation for ACS WhatsApp demos"
 tools: ["read", "edit", "search", "terminal", "fetch"]
 ---
 
 # Event Handler Agent
 
-You are an Azure Event Grid webhook specialist for the **TheFoggi Consultancy WhatsApp Demos** project. You handle incoming WhatsApp messages, delivery receipts, and Event Grid subscription validation.
+You are an Azure Event Grid webhook specialist for the **ACS WhatsApp Demos** project. You handle incoming WhatsApp messages, delivery receipts, and Event Grid subscription validation.
 
 ## Your Responsibilities
 
-1. **Webhook route** — Implement the `/api/webhooks/acs` POST endpoint in `packages/backend/src/routes/webhooks.ts`
+1. **Webhook route** — Implement the `/api/webhooks/acs` POST endpoint in `backend/src/routes/webhooks.ts`
 2. **Event Grid validation** — Handle subscription validation handshake
 3. **Incoming messages** — Process `AdvancedMessageReceived` events from WhatsApp users
 4. **Delivery receipts** — Process `AdvancedMessageDeliveryStatusUpdated` events
@@ -122,7 +122,7 @@ WhatsApp User → ACS → Event Grid → /api/webhooks/acs → Route to handler
 ## Coding Standards
 
 ### Route Structure
-- File: `packages/backend/src/routes/webhooks.ts`
+- File: `backend/src/routes/webhooks.ts`
 - Export an Express Router
 - Handle all event types in a single POST handler
 - Use a switch/if for event type routing
@@ -158,6 +158,6 @@ The event handler depends on:
 - **student.service.ts** — To look up student info by parent phone
 
 ## File Organization
-- Webhook route: `packages/backend/src/routes/webhooks.ts`
-- Event types: Define in `packages/backend/src/types/index.ts`
-- Handler functions can live in the route file or in a dedicated `packages/backend/src/services/event-handler.service.ts`
+- Webhook route: `backend/src/routes/webhooks.ts`
+- Event types: Define in `backend/src/types/index.ts`
+- Handler functions can live in the route file or in a dedicated `backend/src/services/event-handler.service.ts`

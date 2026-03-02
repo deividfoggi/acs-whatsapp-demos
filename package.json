@@ -1,15 +1,15 @@
 {
   "name": "acs-whatsapp-demos",
   "version": "1.0.0",
-  "description": "TheFoggi Consultancy - WhatsApp use case demos powered by Azure Communication Services",
+  "description": "WhatsApp use case demos powered by Azure Communication Services",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "backend"
   ],
   "scripts": {
-    "backend": "npm run dev --workspace=packages/backend",
-    "build": "npm run build --workspace=packages/backend",
-    "lint": "npm run lint --workspace=packages/backend"
+    "backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=backend",
+    "lint": "npm run lint --workspace=backend"
   },
   "engines": {
     "node": ">=20.0.0"

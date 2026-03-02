@@ -1,7 +1,7 @@
-/** Shared TypeScript interfaces for TheFoggi Consultancy WhatsApp Demos */
+/** Shared TypeScript interfaces for ACS WhatsApp Demos */
 
 /**
- * Represents a student enrolled in a TheFoggi Consultancy school.
+ * Represents a student enrolled in a school.
  */
 export interface Student {
   readonly id: string;
@@ -268,7 +268,7 @@ export interface TemplateParameterDefinition {
 }
 
 /**
- * A predefined TheFoggi Consultancy template definition used to populate the demo UI.
+ * A predefined template definition used to populate the demo UI.
  */
 export interface PredefinedTemplate {
   readonly id: string;

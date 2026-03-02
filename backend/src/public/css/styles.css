@@ -1,5 +1,5 @@
 /* ============================================================
-   TheFoggi Consultancy — WhatsApp Demos
+   WhatsApp Communication Demos
    Shared Styles
    ============================================================ */
 
@@ -612,6 +612,12 @@ body {
 .tmpl-send__input:focus,
 .tmpl-send__select:focus {
   border-color: var(--primary);
+}
+
+.tmpl-select__option--disabled,
+.tmpl-send__select option:disabled {
+  color: #a19f9d;
+  font-style: italic;
 }
 
 .tmpl-send__description {

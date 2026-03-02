@@ -1,12 +1,12 @@
-# TheFoggi Consultancy — WhatsApp Demos: Copilot Instructions
+# ACS WhatsApp Demos: Copilot Instructions
 
 ## Project Context
 
-This is a WhatsApp-first communication platform for **TheFoggi Consultancy**, a group of schools. Parents and guardians interact with the school system via WhatsApp, powered by **Azure Communication Services (ACS) Advanced Messaging**. The project implements multiple use cases as independent features, all sharing a common backend.
+This is a WhatsApp-first communication platform. Parents and guardians interact with the school system via WhatsApp, powered by **Azure Communication Services (ACS) Advanced Messaging**. The project implements multiple use cases as independent features, all sharing a common backend. The company/organization name is configured via the `COMPANY_NAME` environment variable.
 
 ### Business Domain
 
-- **Organization**: TheFoggi Consultancy (school group)
+- **Organization**: Configured via `COMPANY_NAME` env var
 - **Users**: Parents/guardians of enrolled students
 - **Channel**: WhatsApp (via ACS Advanced Messaging)
 - **Use cases**: Payment flows, notifications, enrollment, attendance — all through WhatsApp
@@ -22,7 +22,7 @@ This is a WhatsApp-first communication platform for **TheFoggi Consultancy**, a 
 | Event Handling      | Azure Event Grid webhooks                           |
 | Validation          | Zod schemas                                         |
 | Data Layer          | In-memory dummy data (interfaces ready for DB swap) |
-| Package Manager     | npm workspaces                                      |
+| Package Manager     | npm                                                 |
 
 ## TypeScript Conventions
 
@@ -143,7 +143,7 @@ Response format:
 ## File Organization
 
 ```
-packages/backend/src/
+backend/src/
   index.ts              — Express app setup and server start
   routes/               — Express route handlers, one file per domain
   services/             — Business logic with dummy implementations
@@ -157,5 +157,6 @@ packages/backend/src/
 Always read from `process.env` via a typed config module. Required variables:
 - `ACS_CONNECTION_STRING` — ACS resource connection string
 - `ACS_CHANNEL_REGISTRATION_ID` — WhatsApp channel registration GUID
+- `COMPANY_NAME` — Company/organization name displayed in the UI
 - `PORT` — Server port (default: 3000)
 - `NODE_ENV` — `development` | `production`

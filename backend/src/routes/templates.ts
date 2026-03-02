@@ -71,7 +71,7 @@ router.get(
 
 /**
  * GET /api/templates/predefined
- * Returns the predefined TheFoggi Consultancy template definitions for UI rendering.
+ * Returns the predefined template definitions for UI rendering.
  */
 router.get(
   "/predefined",

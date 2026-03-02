@@ -25,12 +25,12 @@
             {
               "id": "stu_001",
               "title": "Lucas Silva - 5th Grade",
-              "description": "TheFoggi Elementary"
+              "description": "Demo Elementary"
             },
             {
               "id": "stu_002",
               "title": "Maria Silva - 8th Grade",
-              "description": "TheFoggi Middle School"
+              "description": "Demo Middle School"
             }
           ]
         }
@@ -40,7 +40,7 @@
         "children": [
           {
             "type": "TextHeading",
-            "text": "TheFoggi Consultancy"
+            "text": "School Payment Portal"
           },
           {
             "type": "TextSubheading",
@@ -316,7 +316,7 @@
             "required": true,
             "on-click-action": {
               "name": "open_url",
-              "url": "https://thefoggi.com/terms"
+              "url": "https://example.com/terms"
             }
           },
           {

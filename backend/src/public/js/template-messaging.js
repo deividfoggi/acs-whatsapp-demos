@@ -1,6 +1,6 @@
 /**
  * Template Messaging — Frontend Logic
- * TheFoggi Consultancy — WhatsApp Demos
+ * WhatsApp Communication Demos
  *
  * Handles: template browsing, sending predefined templates, SSE for
  * delivery status + inbound replies (including interactive button taps),
@@ -31,6 +31,7 @@
 
   // ── State ───────────────────────────────────────────────────────────
   let predefinedTemplates = [];
+  let acsTemplates = [];      // Templates fetched from the ACS channel
   let currentPhone = null;
   let messages = []; // Messages for the active conversation
 
@@ -54,6 +55,7 @@
   function loadTemplates() {
     templateList.innerHTML =
       '<p class="tmpl-browser__loading">Loading templates…</p>';
+    templateSelect.innerHTML = '<option value="">— Loading templates… —</option>';
 
     fetch("/api/templates")
       .then(function (res) {
@@ -63,13 +65,17 @@
         if (!result.success) {
           templateList.innerHTML =
             '<p class="tmpl-browser__error">Failed to load templates.</p>';
+          templateSelect.innerHTML = '<option value="">— Failed to load —</option>';
           return;
         }
-        renderTemplateList(result.data);
+        acsTemplates = result.data || [];
+        renderTemplateList(acsTemplates);
+        populateTemplateSelect();
       })
       .catch(function () {
         templateList.innerHTML =
           '<p class="tmpl-browser__error">Error fetching templates.</p>';
+        templateSelect.innerHTML = '<option value="">— Error loading —</option>';
       });
   }
 
@@ -132,68 +138,82 @@
   }
 
   function populateTemplateSelect() {
-    // Keep the default option
     var html = '<option value="">— Select a template —</option>';
-    predefinedTemplates.forEach(function (t) {
+    acsTemplates.forEach(function (t, index) {
+      var isApproved = (t.status || "").toLowerCase() === "approved";
+      var label = escapeHtml(t.name || "Unnamed");
+      if (t.language) {
+        label += " (" + escapeHtml(t.language) + ")";
+      }
+      if (!isApproved) {
+        label += " — " + escapeHtml(t.status || "unknown");
+      }
       html +=
-        '<option value="' +
-        escapeHtml(t.id) +
-        '">' +
-        escapeHtml(t.displayName) +
-        "</option>";
+        '<option value="' + index + '"' +
+        (!isApproved ? ' disabled class="tmpl-select__option--disabled"' : '') +
+        ">" + label + "</option>";
     });
     templateSelect.innerHTML = html;
   }
 
   function onTemplateSelected() {
-    var selectedId = templateSelect.value;
+    var selectedIndex = templateSelect.value;
     paramFields.innerHTML = "";
     buttonsPreview.style.display = "none";
     templateDescription.textContent = "";
     sendBtn.disabled = true;
 
-    if (!selectedId) return;
+    if (selectedIndex === "" || selectedIndex == null) return;
 
+    var acsTmpl = acsTemplates[parseInt(selectedIndex, 10)];
+    if (!acsTmpl) return;
+
+    // Try to find a matching predefined template for parameter definitions
     var tmpl = predefinedTemplates.find(function (t) {
-      return t.id === selectedId;
-    });
-    if (!tmpl) return;
-
-    templateDescription.textContent = tmpl.description;
-
-    // Render parameter input fields (skip fixed-value params)
-    tmpl.parameterDefinitions.forEach(function (param) {
-      if (param.fixedValue) return;
-
-      var fieldDiv = document.createElement("div");
-      fieldDiv.className = "tmpl-send__field";
-
-      var label = document.createElement("label");
-      label.setAttribute("for", "param_" + param.name);
-      label.textContent = param.label;
-
-      var input = document.createElement("input");
-      input.type = "text";
-      input.id = "param_" + param.name;
-      input.name = param.name;
-      input.className = "tmpl-send__input";
-      input.placeholder = param.placeholder;
-
-      fieldDiv.appendChild(label);
-      fieldDiv.appendChild(input);
-      paramFields.appendChild(fieldDiv);
+      return t.templateName === acsTmpl.name && t.language === acsTmpl.language;
     });
 
-    // Show Quick Reply button preview if applicable
-    if (tmpl.hasQuickReply && tmpl.quickReplyButtons) {
-      buttonLabels.innerHTML = "";
-      tmpl.quickReplyButtons.forEach(function (label) {
-        var badge = document.createElement("span");
-        badge.className = "tmpl-send__button-badge";
-        badge.textContent = label;
-        buttonLabels.appendChild(badge);
+    if (tmpl) {
+      templateDescription.textContent = tmpl.description;
+
+      // Render parameter input fields (skip fixed-value params)
+      tmpl.parameterDefinitions.forEach(function (param) {
+        if (param.fixedValue) return;
+
+        var fieldDiv = document.createElement("div");
+        fieldDiv.className = "tmpl-send__field";
+
+        var label = document.createElement("label");
+        label.setAttribute("for", "param_" + param.name);
+        label.textContent = param.label;
+
+        var input = document.createElement("input");
+        input.type = "text";
+        input.id = "param_" + param.name;
+        input.name = param.name;
+        input.className = "tmpl-send__input";
+        input.placeholder = param.placeholder;
+
+        fieldDiv.appendChild(label);
+        fieldDiv.appendChild(input);
+        paramFields.appendChild(fieldDiv);
       });
-      buttonsPreview.style.display = "block";
+
+      // Show Quick Reply button preview if applicable
+      if (tmpl.hasQuickReply && tmpl.quickReplyButtons) {
+        buttonLabels.innerHTML = "";
+        tmpl.quickReplyButtons.forEach(function (label) {
+          var badge = document.createElement("span");
+          badge.className = "tmpl-send__button-badge";
+          badge.textContent = label;
+          buttonLabels.appendChild(badge);
+        });
+        buttonsPreview.style.display = "block";
+      }
+    } else {
+      templateDescription.textContent =
+        "No predefined parameter definition found for this template. " +
+        "It will be sent without custom parameters.";
     }
 
     sendBtn.disabled = false;
@@ -202,9 +222,9 @@
   // ── Send Template ──────────────────────────────────────────────────
   function sendTemplate() {
     var phone = phoneInput.value.trim();
-    var templateId = templateSelect.value;
+    var selectedIndex = templateSelect.value;
 
-    if (!phone || !templateId) {
+    if (!phone || selectedIndex === "" || selectedIndex == null) {
       showResult("Please enter a phone number and select a template.", true);
       return;
     }
@@ -215,18 +235,33 @@
       return;
     }
 
+    var acsTmpl = acsTemplates[parseInt(selectedIndex, 10)];
+    if (!acsTmpl) return;
+
+    // Find matching predefined template for parameter definitions
     var tmpl = predefinedTemplates.find(function (t) {
-      return t.id === templateId;
+      return t.templateName === acsTmpl.name && t.language === acsTmpl.language;
     });
-    if (!tmpl) return;
+
+    var templateId = tmpl ? tmpl.id : null;
 
     // Collect parameter values (skip fixed-value params — backend handles them)
     var parameters = {};
-    tmpl.parameterDefinitions.forEach(function (param) {
-      if (param.fixedValue) return;
-      var input = document.getElementById("param_" + param.name);
-      parameters[param.name] = input ? input.value : "";
-    });
+    if (tmpl) {
+      tmpl.parameterDefinitions.forEach(function (param) {
+        if (param.fixedValue) return;
+        var input = document.getElementById("param_" + param.name);
+        parameters[param.name] = input ? input.value : "";
+      });
+    }
+
+    if (!templateId) {
+      showResult(
+        "No predefined definition for this template — cannot send without parameter mapping.",
+        true
+      );
+      return;
+    }
 
     sendBtn.disabled = true;
     sendBtn.textContent = "Sending…";
@@ -245,7 +280,7 @@
             "✓ Template sent! Message ID: " + result.data.messageId,
             false
           );
-          activateConversation(phone, tmpl, parameters, result.data.messageId);
+          activateConversation(phone, tmpl || { displayName: acsTmpl.name, parameterDefinitions: [] }, parameters, result.data.messageId);
         } else {
           showResult(
             "✗ " + (result.error ? result.error.message : "Failed to send"),

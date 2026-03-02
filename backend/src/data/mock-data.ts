@@ -8,7 +8,7 @@ import {
 } from "../types/index.js";
 
 /**
- * In-memory mock students for TheFoggi Consultancy.
+ * In-memory mock students.
  * Two parents, each with 2 students across different schools.
  */
 export const MOCK_STUDENTS: Student[] = [
@@ -17,28 +17,28 @@ export const MOCK_STUDENTS: Student[] = [
     name: "Lucas Silva",
     grade: "5th Grade",
     parentPhone: "+5511999990001",
-    schoolName: "TheFoggi Elementary",
+    schoolName: "Demo Elementary",
   },
   {
     id: "stu_002",
     name: "Maria Silva",
     grade: "8th Grade",
     parentPhone: "+5511999990001",
-    schoolName: "TheFoggi Middle School",
+    schoolName: "Demo Middle School",
   },
   {
     id: "stu_003",
     name: "Pedro Santos",
     grade: "3rd Grade",
     parentPhone: "+5511999990002",
-    schoolName: "TheFoggi Elementary",
+    schoolName: "Demo Elementary",
   },
   {
     id: "stu_004",
     name: "Ana Santos",
     grade: "11th Grade",
     parentPhone: "+5511999990002",
-    schoolName: "TheFoggi High School",
+    schoolName: "Demo High School",
   },
 ];
 

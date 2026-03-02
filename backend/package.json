@@ -1,7 +1,7 @@
 {
-  "name": "@thefoggi-consultancy/backend",
+  "name": "@acs-whatsapp-demos/backend",
   "version": "1.0.0",
-  "description": "Backend API for TheFoggi Consultancy WhatsApp demos",
+  "description": "Backend API for ACS WhatsApp demos",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

@@ -1,7 +1,7 @@
 import type { PredefinedTemplate } from "../types/index.js";
 
 /**
- * Predefined TheFoggi Consultancy WhatsApp template definitions.
+ * Predefined WhatsApp template definitions.
  *
  * These describe the templates that should be pre-created in the Meta WhatsApp
  * Business Manager. The definitions here drive the demo UI — they map display-
@@ -16,7 +16,7 @@ export const PREDEFINED_TEMPLATES: readonly PredefinedTemplate[] = [
     id: "enrollment_confirmation",
     displayName: "Enrollment Confirmation",
     description:
-      "Confirma a matrícula de um aluno em um curso da TheFoggi Consultancy. " +
+      "Confirma a matrícula de um aluno em um curso. " +
       "Enviado após o registro bem-sucedido.",
     templateName: "enrollment_confirmation",
     language: "pt_BR",

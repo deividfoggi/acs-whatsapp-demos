@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Template Messages — TheFoggi Consultancy</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <span class="header__logo">📋</span>
+    <span class="header__title">Template Messages</span>
+    <a href="/">← Back to Demos</a>
+    <span class="header__subtitle" id="connectionStatus">Connecting…</span>
+  </header>
+
+  <div class="tmpl-app">
+    <!-- Left Panel: Template Browser -->
+    <aside class="tmpl-browser">
+      <div class="tmpl-browser__header">
+        <h3>Channel Templates</h3>
+        <button class="tmpl-browser__refresh" id="refreshBtn" title="Refresh templates">⟳</button>
+      </div>
+      <div class="tmpl-browser__list" id="templateList">
+        <p class="tmpl-browser__loading">Loading templates…</p>
+      </div>
+    </aside>
+
+    <!-- Right Panel: Send + Conversation -->
+    <main class="tmpl-main">
+      <!-- Send Template Section -->
+      <section class="tmpl-send">
+        <h3 class="tmpl-send__title">Send Template Message</h3>
+
+        <div class="tmpl-send__form">
+          <div class="tmpl-send__field">
+            <label for="phoneInput">Recipient Phone (E.164)</label>
+            <input
+              type="text"
+              id="phoneInput"
+              class="tmpl-send__input"
+              placeholder="+5511999990001"
+            />
+          </div>
+
+          <div class="tmpl-send__field">
+            <label for="templateSelect">Predefined Template</label>
+            <select id="templateSelect" class="tmpl-send__select">
+              <option value="">— Select a template —</option>
+            </select>
+          </div>
+
+          <div class="tmpl-send__description" id="templateDescription"></div>
+
+          <!-- Dynamic parameter fields rendered here -->
+          <div id="paramFields"></div>
+
+          <!-- Quick Reply preview -->
+          <div class="tmpl-send__buttons-preview" id="buttonsPreview" style="display:none;">
+            <label>Quick Reply Buttons:</label>
+            <div id="buttonLabels"></div>
+          </div>
+
+          <button class="tmpl-send__btn" id="sendBtn" disabled>
+            Send Template
+          </button>
+
+          <div class="tmpl-send__result" id="sendResult"></div>
+        </div>
+      </section>
+
+      <!-- Conversation Section -->
+      <section class="tmpl-conversation" id="conversationSection">
+        <div class="tmpl-conversation__header">
+          <h3>Conversation</h3>
+          <span class="tmpl-conversation__phone" id="convoPhone"></span>
+        </div>
+        <div class="tmpl-conversation__placeholder" id="convoPlaceholder">
+          Send a template message to start a conversation.
+          <br /><small>Replies and delivery status updates will appear here in real time.</small>
+        </div>
+        <div class="tmpl-conversation__messages" id="convoMessages" style="display:none;"></div>
+        <div class="tmpl-conversation__compose" id="convoCompose" style="display:none;">
+          <input
+            type="text"
+            class="compose__input"
+            id="followUpInput"
+            placeholder="Type a follow-up message (24h window)…"
+          />
+          <button class="compose__btn" id="followUpBtn" title="Send follow-up">▶</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/template-messaging.js"></script>
+</body>
+</html>

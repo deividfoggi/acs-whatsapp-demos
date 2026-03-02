@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Messaging — TheFoggi Consultancy</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <span class="header__logo">💬</span>
+    <span class="header__title">Simple Messaging</span>
+    <a href="/">← Back to Demos</a>
+    <span class="header__subtitle" id="connectionStatus">Connecting…</span>
+  </header>
+
+  <div class="chat-app">
+    <!-- Sidebar: Conversation List -->
+    <aside class="sidebar">
+      <div class="sidebar__header">Conversations</div>
+      <ul class="sidebar__list" id="conversationList">
+        <li class="sidebar__empty" id="emptyState">
+          No conversations yet.<br />
+          Waiting for incoming WhatsApp messages…
+        </li>
+      </ul>
+      <!-- New conversation -->
+      <div class="new-conversation">
+        <input
+          type="text"
+          class="new-conversation__input"
+          id="newPhoneInput"
+          placeholder="+5511999990001"
+          aria-label="Phone number for new conversation"
+        />
+        <button class="new-conversation__btn" id="newConvoBtn">+ New</button>
+      </div>
+    </aside>
+
+    <!-- Chat Panel -->
+    <section class="chat-panel" id="chatPanel">
+      <div class="chat-panel__placeholder" id="chatPlaceholder">
+        Select a conversation or start a new one
+      </div>
+
+      <!-- Active chat (hidden by default) -->
+      <div id="activeChat" style="display:none; flex:1; display:none; flex-direction:column;">
+        <div class="chat-panel__header">
+          <span id="chatPhoneDisplay"></span>
+          <span class="chat-panel__status" id="chatStatus"></span>
+        </div>
+        <div class="messages" id="messagesContainer"></div>
+        <div class="compose">
+          <input
+            type="text"
+            class="compose__input"
+            id="messageInput"
+            placeholder="Type a message…"
+            aria-label="Message text"
+          />
+          <button class="compose__btn" id="sendBtn" title="Send message">▶</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/simple-messaging.js"></script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+{
+  "version": "7.3",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "SELECT_STUDENT": ["SELECT_FEE"],
+    "SELECT_FEE": ["PAYMENT_DETAILS"],
+    "PAYMENT_DETAILS": ["CONFIRMATION"]
+  },
+  "screens": [
+    {
+      "id": "SELECT_STUDENT",
+      "title": "Select Student",
+      "data": {
+        "students": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          },
+          "__example__": [
+            {
+              "id": "stu_001",
+              "title": "Lucas Silva - 5th Grade",
+              "description": "TheFoggi Elementary"
+            },
+            {
+              "id": "stu_002",
+              "title": "Maria Silva - 8th Grade",
+              "description": "TheFoggi Middle School"
+            }
+          ]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "TheFoggi Consultancy"
+          },
+          {
+            "type": "TextSubheading",
+            "text": "Payment Portal"
+          },
+          {
+            "type": "TextBody",
+            "text": "Select the student you would like to make a payment for."
+          },
+          {
+            "type": "Dropdown",
+            "name": "student_id",
+            "label": "Student",
+            "required": true,
+            "data-source": "${data.students}"
+          },
+          {
+            "type": "Footer",
+            "label": "Continue",
+            "on-click-action": {
+              "name": "data_exchange",
+              "payload": {
+                "student_id": "${form.student_id}"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "SELECT_FEE",
+      "title": "Select Fee",
+      "data": {
+        "student_id": {
+          "type": "string",
+          "__example__": "stu_001"
+        },
+        "fees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          },
+          "__example__": [
+            {
+              "id": "fee_001",
+              "title": "March 2026 Tuition",
+              "description": "$1200.00 — due 2026-03-10"
+            },
+            {
+              "id": "fee_002",
+              "title": "Materials Fee - Semester 1",
+              "description": "$350.00 — due 2026-02-15"
+            }
+          ]
+        },
+        "has_fees": {
+          "type": "boolean",
+          "__example__": true
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Outstanding Fees"
+          },
+          {
+            "type": "TextBody",
+            "text": "Select the fee you would like to pay."
+          },
+          {
+            "type": "RadioButtonsGroup",
+            "name": "fee_id",
+            "label": "Fees",
+            "required": true,
+            "data-source": "${data.fees}"
+          },
+          {
+            "type": "Footer",
+            "label": "Continue",
+            "on-click-action": {
+              "name": "data_exchange",
+              "payload": {
+                "student_id": "${data.student_id}",
+                "fee_id": "${form.fee_id}"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "PAYMENT_DETAILS",
+      "title": "Payment Details",
+      "data": {
+        "student_id": {
+          "type": "string",
+          "__example__": "stu_001"
+        },
+        "fee_id": {
+          "type": "string",
+          "__example__": "fee_001"
+        },
+        "fee_description": {
+          "type": "string",
+          "__example__": "March 2026 Tuition"
+        },
+        "fee_amount": {
+          "type": "number",
+          "__example__": 1200
+        },
+        "fee_due_date": {
+          "type": "string",
+          "__example__": "2026-03-10"
+        },
+        "payment_methods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" }
+            }
+          },
+          "__example__": [
+            { "id": "credit_card", "title": "Credit Card" },
+            { "id": "bank_transfer", "title": "Bank Transfer" },
+            { "id": "pix", "title": "PIX" }
+          ]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Payment Details"
+          },
+          {
+            "type": "TextSubheading",
+            "text": "${data.fee_description}"
+          },
+          {
+            "type": "TextBody",
+            "text": "`'Amount: $' ${data.fee_amount}`"
+          },
+          {
+            "type": "TextBody",
+            "text": "`'Due date: ' ${data.fee_due_date}`"
+          },
+          {
+            "type": "Dropdown",
+            "name": "payment_method",
+            "label": "Payment Method",
+            "required": true,
+            "data-source": "${data.payment_methods}"
+          },
+          {
+            "type": "TextInput",
+            "name": "payment_reference",
+            "label": "Payment Reference",
+            "input-type": "text",
+            "required": false,
+            "helper-text": "Optional: enter a reference or note"
+          },
+          {
+            "type": "Footer",
+            "label": "Review Payment",
+            "on-click-action": {
+              "name": "navigate",
+              "next": { "type": "screen", "name": "CONFIRMATION" },
+              "payload": {
+                "student_id": "${data.student_id}",
+                "fee_id": "${data.fee_id}",
+                "fee_description": "${data.fee_description}",
+                "fee_amount": "${data.fee_amount}",
+                "fee_due_date": "${data.fee_due_date}",
+                "payment_method": "${form.payment_method}",
+                "payment_reference": "${form.payment_reference}"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONFIRMATION",
+      "title": "Confirm Payment",
+      "terminal": true,
+      "data": {
+        "student_id": {
+          "type": "string",
+          "__example__": "stu_001"
+        },
+        "fee_id": {
+          "type": "string",
+          "__example__": "fee_001"
+        },
+        "fee_description": {
+          "type": "string",
+          "__example__": "March 2026 Tuition"
+        },
+        "fee_amount": {
+          "type": "number",
+          "__example__": 1200
+        },
+        "fee_due_date": {
+          "type": "string",
+          "__example__": "2026-03-10"
+        },
+        "payment_method": {
+          "type": "string",
+          "__example__": "pix"
+        },
+        "payment_reference": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Confirm Payment"
+          },
+          {
+            "type": "TextBody",
+            "text": "Please review the details below and confirm your payment."
+          },
+          {
+            "type": "TextSubheading",
+            "text": "Fee"
+          },
+          {
+            "type": "TextBody",
+            "text": "${data.fee_description}"
+          },
+          {
+            "type": "TextSubheading",
+            "text": "Amount"
+          },
+          {
+            "type": "TextBody",
+            "text": "`'$' ${data.fee_amount}`"
+          },
+          {
+            "type": "TextSubheading",
+            "text": "Due Date"
+          },
+          {
+            "type": "TextBody",
+            "text": "${data.fee_due_date}"
+          },
+          {
+            "type": "TextSubheading",
+            "text": "Payment Method"
+          },
+          {
+            "type": "TextBody",
+            "text": "${data.payment_method}"
+          },
+          {
+            "type": "OptIn",
+            "name": "confirm_terms",
+            "label": "I confirm this payment and agree to the terms.",
+            "required": true,
+            "on-click-action": {
+              "name": "open_url",
+              "url": "https://thefoggi.com/terms"
+            }
+          },
+          {
+            "type": "Footer",
+            "label": "Confirm Payment",
+            "on-click-action": {
+              "name": "complete",
+              "payload": {
+                "student_id": "${data.student_id}",
+                "fee_id": "${data.fee_id}",
+                "fee_amount": "${data.fee_amount}",
+                "payment_method": "${data.payment_method}",
+                "payment_reference": "${data.payment_reference}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

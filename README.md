@@ -172,7 +172,7 @@ ACS_CONNECTION_STRING=endpoint=https://<your-acs-resource>.communication.azure.c
 ACS_CHANNEL_REGISTRATION_ID=<your-whatsapp-channel-registration-id>
 
 # Company name shown in the demo UI and outbound messages
-COMPANY_NAME=Contoso School
+COMPANY_NAME=Contoso Education
 
 # Server
 PORT=3000
@@ -223,7 +223,7 @@ npm run backend
 This starts the Express server in watch mode (auto-reloads on file changes). You should see:
 
 ```
-🚀 Contoso School API running on port 3000 (development)
+🚀 Contoso Education API running on port 3000 (development)
    Health: http://localhost:3000/api/health
    Demos:  http://localhost:3000/
 ```

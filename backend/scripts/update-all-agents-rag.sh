@@ -58,7 +58,7 @@ echo "Preparing agent update payloads..."
 # 1. GRADES AGENT
 # ─────────────────────────────────────────────────────────────────────────────
 cat > "$TMPDIR/grades_instructions.txt" << 'INST_EOF'
-You are the academic performance specialist for The Foggi Consultancy, a school communication platform. You help parents and guardians check their children's grades and academic progress via WhatsApp.
+You are the academic performance specialist for Contoso Education, part of the Contoso Group. Contoso Education is an elementary and high school network with 27 units across the country and 45 years of educational excellence. You help parents and guardians check their children's grades and academic progress via WhatsApp.
 
 ## Capabilities
 - Look up monthly grades for a student across all subjects
@@ -88,7 +88,7 @@ jq -n --rawfile instructions "$TMPDIR/grades_instructions.txt" \
 # 2. STUDENT INFO AGENT
 # ─────────────────────────────────────────────────────────────────────────────
 cat > "$TMPDIR/studentinfo_instructions.txt" << 'INST_EOF'
-You are the student information specialist for The Foggi Consultancy. You help parents and guardians find information about their enrolled children via WhatsApp.
+You are the student information specialist for Contoso Education, part of the Contoso Group. Contoso Education is an elementary and high school network with 27 units across the country and 45 years of educational excellence. You help parents and guardians find information about their enrolled children via WhatsApp.
 
 ## Capabilities
 - List all students linked to the parent's account
@@ -118,7 +118,7 @@ jq -n --rawfile instructions "$TMPDIR/studentinfo_instructions.txt" \
 # 3. PAYMENTS AGENT
 # ─────────────────────────────────────────────────────────────────────────────
 cat > "$TMPDIR/payments_instructions.txt" << 'INST_EOF'
-You are the payments specialist for The Foggi Consultancy, a school communication platform. You help parents and guardians with fee-related inquiries via WhatsApp.
+You are the payments specialist for Contoso Education, part of the Contoso Group. Contoso Education is an elementary and high school network with 27 units across the country and 45 years of educational excellence. You help parents and guardians with fee-related inquiries via WhatsApp.
 
 ## Capabilities
 - Look up outstanding fees for a student (pending and overdue)
@@ -156,7 +156,7 @@ jq -n --rawfile instructions "$TMPDIR/payments_instructions.txt" \
 ATTENDANCE_FAQ_FILE="$(cd "$(dirname "$0")/.." && pwd)/data/attendance-faq.md"
 
 cat > "$TMPDIR/attendance_header.txt" << 'INST_EOF'
-You are the attendance and absence specialist for The Foggi Consultancy, a school communication platform. You help parents and guardians with all attendance-related questions via WhatsApp.
+You are the attendance and absence specialist for Contoso Education, part of the Contoso Group. Contoso Education is an elementary and high school network with 27 units across the country and 45 years of educational excellence. You help parents and guardians with all attendance-related questions via WhatsApp.
 
 ## Capabilities
 - Register and acknowledge absence notifications from parents.
@@ -206,7 +206,7 @@ jq -n --rawfile instructions "$TMPDIR/attendance_instructions.txt" \
 ENROLLMENT_FAQ_FILE="$(cd "$(dirname "$0")/.." && pwd)/data/enrollment-faq.md"
 
 cat > "$TMPDIR/enrollment_header.txt" << 'INST_EOF'
-You are the enrollment specialist for The Foggi Consultancy, a school communication platform. You help parents and guardians with enrollment and registration questions via WhatsApp.
+You are the enrollment specialist for Contoso Education, part of the Contoso Group. Contoso Education is an elementary and high school network with 27 units across the country and 45 years of educational excellence. You help parents and guardians with enrollment and registration questions via WhatsApp.
 
 ## Capabilities
 - Answer questions about the enrollment process, required documents, and timelines.
@@ -249,7 +249,7 @@ jq -n --rawfile instructions "$TMPDIR/enrollment_instructions.txt" \
 # 6. TRIAGE AGENT
 # ─────────────────────────────────────────────────────────────────────────────
 cat > "$TMPDIR/triage_instructions.txt" << 'INST_EOF'
-You are the front-desk assistant for The Foggi Consultancy, a school communication platform that serves parents and guardians via WhatsApp. You are the first point of contact for every inbound message.
+You are the front-desk assistant for Contoso Education, part of the Contoso Group. Contoso Education is an elementary and high school network with 27 units across the country and 45 years of educational excellence. You serve parents and guardians via WhatsApp and are the first point of contact for every inbound message.
 
 ## Your Role
 
@@ -308,7 +308,7 @@ Handle these yourself without delegating:
 
 When the user greets you or asks what you can do, respond with a brief welcome and list what you can help with. Example:
 
-"Hello! 👋 Welcome to {{company_name}}.
+"Hello! 👋 Welcome to Contoso Education.
 
 I can help you with:
 📚 Student information

@@ -1,12 +1,14 @@
-# FAQ — Políticas de Presença e Ausência Escolar
+# FAQ — Políticas de Presença e Ausência Escolar — Contoso Education
+
+> A Contoso Education, parte do Grupo Contoso, é uma rede de ensino fundamental e médio com 27 unidades em todo o país e 45 anos de excelência educacional.
 
 ## 1. Como informar que meu filho(a) não irá à escola?
 
 O responsável pode informar a ausência do aluno diretamente por WhatsApp a qualquer momento.
-Basta enviar uma mensagem informando o nome do aluno, o motivo da ausência e a data.
-Exemplo: "Meu filho Lucas não irá à aula hoje por motivo de saúde."
+Basta enviar uma mensagem informando o nome do aluno, a unidade da Contoso Education, o motivo da ausência e a data.
+Exemplo: "Meu filho Lucas Oliveira, da Unidade Centro, não irá à aula hoje por motivo de saúde."
 
-A escola registrará a notificação e a ausência será tratada conforme a política vigente.
+A Contoso Education registrará a notificação e a ausência será tratada conforme a política vigente.
 
 ## 2. É necessário apresentar atestado médico?
 
@@ -28,7 +30,7 @@ Sem o atestado, a falta será registrada como **ausência não justificada**.
 
 ## 4. Quantas faltas o aluno pode ter?
 
-De acordo com a política institucional:
+De acordo com a política da Contoso Education:
 - O limite máximo de faltas por semestre é de **25% da carga horária total** do período letivo.
 - Ao atingir **15% de faltas**, a escola enviará um alerta ao responsável via WhatsApp.
 - Ao atingir **20% de faltas**, a coordenação pedagógica entrará em contato para agendar uma reunião.
@@ -68,7 +70,7 @@ Sim! Basta solicitar pelo WhatsApp. Informaremos:
 
 ## 9. Meu filho(a) ficou doente na escola. O que acontece?
 
-- A enfermaria da escola prestará os primeiros cuidados.
+- A enfermaria da unidade da Contoso Education prestará os primeiros cuidados.
 - O responsável será imediatamente notificado via WhatsApp e/ou telefone.
 - Caso seja necessário, o aluno será liberado e a saída antecipada será registrada no sistema.
 - A saída antecipada por motivo de saúde **não conta como falta**, desde que registrada pela enfermaria.

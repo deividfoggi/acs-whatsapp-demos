@@ -24,13 +24,13 @@
           "__example__": [
             {
               "id": "stu_001",
-              "title": "Lucas Silva - 5th Grade",
-              "description": "Demo Elementary"
+              "title": "Lucas Oliveira - 5th Grade",
+              "description": "Contoso Education - Unidade Centro"
             },
             {
               "id": "stu_002",
-              "title": "Maria Silva - 8th Grade",
-              "description": "Demo Middle School"
+              "title": "Isabella Oliveira - 9th Grade",
+              "description": "Contoso Education - Unidade Centro"
             }
           ]
         }
@@ -40,7 +40,7 @@
         "children": [
           {
             "type": "TextHeading",
-            "text": "School Payment Portal"
+            "text": "Contoso Education Payment Portal"
           },
           {
             "type": "TextSubheading",
@@ -92,12 +92,12 @@
             {
               "id": "fee_001",
               "title": "March 2026 Tuition",
-              "description": "$1200.00 — due 2026-03-10"
+              "description": "$1850.00 — due 2026-03-10"
             },
             {
               "id": "fee_002",
               "title": "Materials Fee - Semester 1",
-              "description": "$350.00 — due 2026-02-15"
+              "description": "$420.00 — due 2026-02-15"
             }
           ]
         },
@@ -156,7 +156,7 @@
         },
         "fee_amount": {
           "type": "number",
-          "__example__": 1200
+          "__example__": 1850
         },
         "fee_due_date": {
           "type": "string",
@@ -251,7 +251,7 @@
         },
         "fee_amount": {
           "type": "number",
-          "__example__": 1200
+          "__example__": 1850
         },
         "fee_due_date": {
           "type": "string",

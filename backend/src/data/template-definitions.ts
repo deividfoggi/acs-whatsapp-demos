@@ -16,27 +16,27 @@ export const PREDEFINED_TEMPLATES: readonly PredefinedTemplate[] = [
     id: "enrollment_confirmation",
     displayName: "Enrollment Confirmation",
     description:
-      "Confirma a matrícula de um aluno em um curso. " +
-      "Enviado após o registro bem-sucedido.",
+      "Confirma a matrícula de um aluno na Contoso Education. " +
+      "Enviado após o registro bem-sucedido em uma das 27 unidades.",
     templateName: "enrollment_confirmation",
     language: "pt_BR",
     parameterDefinitions: [
       {
         name: "customer_name",
         label: "Customer Name",
-        placeholder: "e.g., Maria Silva",
+        placeholder: "e.g., Carlos Oliveira",
         component: "body",
       },
       {
         name: "course_name",
         label: "Course Name",
-        placeholder: "e.g., Engenharia de Software",
+        placeholder: "e.g., 5º Ano - Ensino Fundamental",
         component: "body",
       },
       {
         name: "course_start_date",
         label: "Course Start Date",
-        placeholder: "e.g., 10 de Março de 2026",
+        placeholder: "e.g., 10 de Fevereiro de 2026",
         component: "body",
       },
       {
@@ -61,19 +61,19 @@ export const PREDEFINED_TEMPLATES: readonly PredefinedTemplate[] = [
       {
         name: "StudentName",
         label: "Student Name",
-        placeholder: "e.g., João Santos",
+        placeholder: "e.g., Lucas Oliveira",
         component: "body",
       },
       {
         name: "Amount",
         label: "Amount",
-        placeholder: "e.g., R$ 450.00",
+        placeholder: "e.g., R$ 1,850.00",
         component: "body",
       },
       {
         name: "DueDate",
         label: "Due Date",
-        placeholder: "e.g., March 15, 2026",
+        placeholder: "e.g., March 10, 2026",
         component: "body",
       },
     ],
@@ -91,7 +91,7 @@ export const PREDEFINED_TEMPLATES: readonly PredefinedTemplate[] = [
       {
         name: "student_name",
         label: "Student Name",
-        placeholder: "e.g., Ana Oliveira",
+        placeholder: "e.g., Gabriel Ferreira",
         component: "header",
       },
       {

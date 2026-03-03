@@ -129,8 +129,8 @@ read -rp "$(echo -e "${CYAN}GPT-4o model deployment name${NC} [gpt-4o]: ")" MODE
 MODEL_DEPLOYMENT_NAME="${MODEL_DEPLOYMENT_NAME:-gpt-4o}"
 
 # Company name
-read -rp "$(echo -e "${CYAN}Company/organization name${NC} [Contoso School]: ")" COMPANY_NAME
-COMPANY_NAME="${COMPANY_NAME:-Contoso School}"
+read -rp "$(echo -e "${CYAN}Company/organization name${NC} [Contoso Education]: ")" COMPANY_NAME
+COMPANY_NAME="${COMPANY_NAME:-Contoso Education}"
 
 # Port
 read -rp "$(echo -e "${CYAN}Server port${NC} [3000]: ")" PORT

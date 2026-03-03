@@ -16,7 +16,7 @@
         <mxCell id="cell-10" parent="cell-2" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#438DD5;fontColor=#ffffff;strokeColor=#3C7FC0;size=15;fontSize=11;" value="In-Memory Store&lt;br&gt;&lt;i&gt;[Data Store]&lt;/i&gt;&lt;br&gt;&lt;font style=&#39;font-size:9px&#39;&gt;Students, Fees, Payments,&lt;br&gt;Conversations&lt;/font&gt;" vertex="1">
           <mxGeometry height="75" width="200" x="100" y="280" as="geometry" />
         </mxCell>
-        <mxCell id="cell-3" parent="1" style="text;fontSize=16;fontStyle=1;fillColor=none;strokeColor=none;fontColor=#333333;align=center;verticalAlign=middle;html=1;whiteSpace=wrap;" value="TheFoggi Consultancy — WhatsApp Communication Platform" vertex="1">
+        <mxCell id="cell-3" parent="1" style="text;fontSize=16;fontStyle=1;fillColor=none;strokeColor=none;fontColor=#333333;align=center;verticalAlign=middle;html=1;whiteSpace=wrap;" value="Contoso Education — WhatsApp Communication Platform" vertex="1">
           <mxGeometry height="30" width="650" x="100" y="20" as="geometry" />
         </mxCell>
         <mxCell id="cell-4" parent="1" style="text;fontSize=12;fontColor=#888888;fillColor=none;strokeColor=none;align=center;verticalAlign=middle;html=1;" value="C4 Container Diagram" vertex="1">
@@ -25,7 +25,7 @@
         <mxCell id="cell-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;fontColor=#ffffff;strokeColor=#073B6F;fontSize=11;fontStyle=1;arcSize=50;" value="Parent / Guardian&lt;br&gt;&lt;i&gt;[Person]&lt;/i&gt;&lt;br&gt;&lt;font style=&#39;font-size:9px&#39;&gt;Uses WhatsApp to communicate&lt;br&gt;with the school&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="190" x="330" y="85" as="geometry" />
         </mxCell>
-        <mxCell id="cell-6" parent="1" style="text;fontSize=11;fontStyle=1;fontColor=#444444;fillColor=none;strokeColor=none;verticalAlign=bottom;html=1;align=left;" value="TheFoggi Consultancy Platform [System Boundary]" vertex="1">
+        <mxCell id="cell-6" parent="1" style="text;fontSize=11;fontStyle=1;fontColor=#444444;fillColor=none;strokeColor=none;verticalAlign=bottom;html=1;align=left;" value="Contoso Education Platform [System Boundary]" vertex="1">
           <mxGeometry height="22" width="380" x="230" y="278" as="geometry" />
         </mxCell>
         <mxCell id="cell-7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;fontColor=#ffffff;strokeColor=#8A8A8A;fontSize=11;" value="WhatsApp&lt;br&gt;&lt;i&gt;[External System]&lt;/i&gt;&lt;br&gt;&lt;font style=&#39;font-size:9px&#39;&gt;Meta messaging platform&lt;/font&gt;" vertex="1">

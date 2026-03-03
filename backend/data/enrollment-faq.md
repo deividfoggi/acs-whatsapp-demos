@@ -1,10 +1,12 @@
-# FAQ — Políticas de Matrícula e Registro Escolar
+# FAQ — Políticas de Matrícula e Registro Escolar — Contoso Education
+
+> A Contoso Education, parte do Grupo Contoso, é uma rede de ensino fundamental e médio com 27 unidades em todo o país e 45 anos de excelência educacional.
 
 ## 1. Como fazer a matrícula do meu filho(a)?
 
-O processo de matrícula segue estas etapas:
+O processo de matrícula na Contoso Education segue estas etapas:
 
-1. **Consulta de vagas**: Entre em contato com a escola pelo WhatsApp ou presencialmente para verificar a disponibilidade de vagas na série desejada.
+1. **Consulta de vagas**: Entre em contato com a unidade desejada da Contoso Education pelo WhatsApp ou presencialmente para verificar a disponibilidade de vagas na série desejada.
 2. **Documentação**: Reúna a documentação necessária (veja seção 2).
 3. **Entrega dos documentos**: Envie os documentos pela plataforma ou entregue presencialmente na secretaria.
 4. **Análise**: A equipe pedagógica analisará os documentos e o histórico escolar em até **5 dias úteis**.
@@ -34,7 +36,7 @@ O processo de matrícula segue estas etapas:
 | **Matrícula nova**     | Novembro a Janeiro                   |
 | **Transferência**      | Durante todo o ano letivo (sujeito a vagas) |
 
-- Alunos já matriculados têm **prioridade de rematrícula** até o final de novembro.
+- Alunos já matriculados na Contoso Education têm **prioridade de rematrícula** até o final de novembro.
 - Após esse prazo, a vaga poderá ser oferecida a novos alunos.
 
 ## 4. Existe taxa de matrícula?
@@ -61,7 +63,7 @@ Para transferências durante o ano letivo:
 
 ## 6. Existem bolsas de estudo ou descontos?
 
-A escola oferece as seguintes modalidades:
+A Contoso Education oferece as seguintes modalidades:
 - **Bolsa por mérito acadêmico**: Desconto de 10% a 30% para alunos com média geral acima de 8,5.
 - **Bolsa social**: Desconto de até 50% mediante análise socioeconômica (necessário comprovante de renda).
 - **Desconto para irmãos**: 10% de desconto na mensalidade a partir do segundo filho matriculado.
@@ -81,7 +83,7 @@ Para cancelamento:
 ## 8. Qual o prazo para rematrícula?
 
 - O período de rematrícula ocorre entre **outubro e novembro** do ano corrente para o ano seguinte.
-- A escola enviará uma notificação via WhatsApp com a data de abertura e o link/instruções para rematrícula.
+- A Contoso Education enviará uma notificação via WhatsApp com a data de abertura e o link/instruções para rematrícula.
 - Alunos com mensalidades em atraso devem regularizar a situação antes de efetivar a rematrícula.
 - Após o prazo de rematrícula, a vaga não é garantida.
 
@@ -99,7 +101,7 @@ O responsável pode consultar o status pelo WhatsApp a qualquer momento. Os stat
 
 ## 10. Meu filho(a) tem necessidades especiais. Qual o procedimento?
 
-- A escola oferece atendimento inclusivo conforme legislação vigente.
+- A Contoso Education oferece atendimento inclusivo em todas as suas 27 unidades, conforme legislação vigente.
 - Durante a matrícula, informe as necessidades especiais e apresente laudos médicos ou psicopedagógicos.
 - A equipe de inclusão avaliará as adaptações necessárias (curriculares, de infraestrutura, ou de apoio).
 - Um plano educacional individualizado (PEI) será elaborado em parceria com a família.

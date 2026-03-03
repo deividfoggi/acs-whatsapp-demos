@@ -54,7 +54,8 @@ The script will:
 3. **Create 6 AI Foundry agents**: Triage, Grades, Student Info, Payments, Attendance, and Enrollment — fully wired as Connected Agents
 4. **Configure RBAC**: Azure AI Developer and Cognitive Services OpenAI User roles
 5. **Generate `backend/.env`** with all connection strings and agent IDs
-6. **Install npm dependencies**
+6. **(Optional) Deploy to Azure App Service** — creates the App Service Plan, Web App, builds the project, deploys it, and configures managed identity RBAC
+7. **Install npm dependencies**
 
 ### After the Script
 
@@ -64,20 +65,20 @@ The script will:
    - Update `ACS_CHANNEL_REGISTRATION_ID` in `backend/.env`
    - See [Connect WhatsApp to ACS](#2c-connect-whatsapp-to-acs-and-register-a-phone-number) below for details
 
-2. **Start the server**:
+2. **Start the server** (local development) or use the deployed App Service:
    ```bash
    npm run backend
    ```
 
-3. **Expose locally** (VS Code port forwarding):
+3. **Expose locally** (VS Code port forwarding — skip if you deployed to App Service):
    - Ports tab → Forward port 3000 → Set visibility to **Public**
 
 4. **Create Event Grid webhook**:
    - Azure Portal → ACS resource → Events → + Event Subscription
-   - Endpoint: `https://<your-forwarded-url>/api/webhooks/acs`
+   - Endpoint: `https://<your-app>.azurewebsites.net/api/webhooks/acs` (App Service) or `https://<your-forwarded-url>/api/webhooks/acs` (local)
    - Events: `AdvancedMessageReceived`, `AdvancedMessageDeliveryStatusUpdated`
 
-5. **Open the demo**: [http://localhost:3000/](http://localhost:3000/)
+5. **Open the demo**: [http://localhost:3000/](http://localhost:3000/) or `https://<your-app>.azurewebsites.net/`
 
 ---
 
@@ -254,7 +255,149 @@ Point Azure Event Grid at your forwarded URL so inbound WhatsApp messages reach 
    - **Endpoint URL**: `https://<your-forwarded-url>/api/webhooks/acs`
 4. Click **Create**. Event Grid sends a validation request — the backend handles it automatically.
 
-### 9. Run the Demo Scenarios
+### 9. Deploy to Azure App Service (Optional — Production)
+
+> **Skip this step** if you only need local development. App Service provides a production-ready hosting environment with a public HTTPS URL, eliminating the need for VS Code port forwarding.
+
+#### 9a. Create the App Service Plan and Web App
+
+```bash
+# Create an App Service Plan (Linux, B1 tier)
+az appservice plan create \
+  --name <your-app>-plan \
+  --resource-group <your-rg> \
+  --location <your-region> \
+  --sku B1 \
+  --is-linux
+
+# Create the Web App with Node.js 20 runtime
+az webapp create \
+  --name <your-app> \
+  --resource-group <your-rg> \
+  --plan <your-app>-plan \
+  --runtime "NODE:20-lts"
+```
+
+#### 9b. Configure App Settings
+
+Set all the environment variables on the App Service:
+
+```bash
+az webapp config appsettings set \
+  --name <your-app> \
+  --resource-group <your-rg> \
+  --settings \
+    NODE_ENV=production \
+    PORT=3000 \
+    SCM_DO_BUILD_DURING_DEPLOYMENT=true \
+    ACS_CONNECTION_STRING="<your-acs-connection-string>" \
+    ACS_CHANNEL_REGISTRATION_ID="<your-channel-reg-id>" \
+    COMPANY_NAME="<your-company-name>" \
+    AZURE_AI_PROJECT_ENDPOINT="<your-ai-project-endpoint>" \
+    AZURE_AI_AGENT_ID="<your-triage-agent-id>" \
+    COSMOS_DB_ENDPOINT="https://<your-cosmos-account>.documents.azure.com:443/" \
+    COSMOS_DB_DATABASE_NAME=whatsapp-agents \
+    COSMOS_DB_CONTAINER_NAME=conversations
+```
+
+Set the startup command:
+
+```bash
+az webapp config set \
+  --name <your-app> \
+  --resource-group <your-rg> \
+  --startup-file "node index.js"
+```
+
+#### 9c. Build and Deploy
+
+The project uses npm workspaces, which App Service doesn't handle natively. You need to create a flat deployment package:
+
+```bash
+# 1. Build TypeScript
+cd backend
+npx tsc
+
+# 2. Create a staging directory
+STAGING_DIR=$(mktemp -d)
+
+# 3. Copy compiled JS
+cp -r dist/* "$STAGING_DIR/"
+
+# 4. Copy static assets and data
+cp -r src/public "$STAGING_DIR/public"
+[ -d data ] && cp -r data "$STAGING_DIR/data"
+
+# 5. Create standalone package.json (no workspace references)
+node -e "
+  const pkg = require('./package.json');
+  const standalone = {
+    name: pkg.name,
+    version: pkg.version,
+    private: true,
+    scripts: { start: 'node index.js' },
+    dependencies: pkg.dependencies,
+    engines: { node: '>=20.0.0' }
+  };
+  require('fs').writeFileSync('$STAGING_DIR/package.json', JSON.stringify(standalone, null, 2));
+"
+
+# 6. Deploy (Oryx runs npm install on the server)
+cd "$STAGING_DIR"
+az webapp up \
+  --name <your-app> \
+  --resource-group <your-rg> \
+  --runtime "NODE:20-lts"
+
+# 7. Clean up
+rm -rf "$STAGING_DIR"
+```
+
+Your app is now available at `https://<your-app>.azurewebsites.net/`.
+
+#### 9d. Configure Managed Identity (Recommended)
+
+Enable a system-assigned managed identity so the App Service can authenticate to Cosmos DB and AI Foundry without connection strings:
+
+```bash
+# Enable managed identity
+az webapp identity assign \
+  --name <your-app> \
+  --resource-group <your-rg>
+
+# Get the identity's principal ID
+APP_IDENTITY=$(az webapp identity show \
+  --name <your-app> \
+  --resource-group <your-rg> \
+  --query principalId -o tsv)
+
+# Assign Cosmos DB data access
+az cosmosdb sql role assignment create \
+  --account-name <your-cosmos-account> \
+  --resource-group <your-rg> \
+  --role-definition-name "Cosmos DB Built-in Data Contributor" \
+  --scope "/" \
+  --principal-id "$APP_IDENTITY"
+
+# Assign AI Foundry access
+az role assignment create \
+  --assignee "$APP_IDENTITY" \
+  --role "Azure AI Developer" \
+  --scope /subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.MachineLearningServices/workspaces/<project-name>
+
+az role assignment create \
+  --assignee "$APP_IDENTITY" \
+  --role "Cognitive Services OpenAI User" \
+  --scope /subscriptions/<sub-id>/resourceGroups/<rg>
+```
+
+#### 9e. Update the Event Grid Webhook
+
+Point your Event Grid subscription to the App Service URL instead of the port-forwarded URL:
+
+- **Endpoint URL**: `https://<your-app>.azurewebsites.net/api/webhooks/acs`
+
+### 10. Run the Demo Scenarios
 
 Open your browser and navigate to the demo UI:
 

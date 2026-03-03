@@ -53,7 +53,8 @@ echo -e "  6. Deploy a GPT-4o model"
 echo -e "  7. Create 6 AI Foundry agents (triage + 5 specialists)"
 echo -e "  8. Configure RBAC permissions"
 echo -e "  9. Generate the backend/.env file"
-echo -e " 10. Install npm dependencies"
+echo -e " 10. (Optional) Deploy to Azure App Service"
+echo -e " 11. Install npm dependencies"
 echo ""
 
 step "Checking prerequisites"
@@ -135,6 +136,20 @@ COMPANY_NAME="${COMPANY_NAME:-Contoso School}"
 read -rp "$(echo -e "${CYAN}Server port${NC} [3000]: ")" PORT
 PORT="${PORT:-3000}"
 
+# App Service (optional)
+echo ""
+read -rp "$(echo -e "${CYAN}Deploy to Azure App Service? (y/N)${NC}: ")" DEPLOY_APP_SERVICE
+DEPLOY_APP_SERVICE="${DEPLOY_APP_SERVICE:-n}"
+DEPLOY_APP_SERVICE=$(echo "$DEPLOY_APP_SERVICE" | tr '[:upper:]' '[:lower:]')
+
+if [[ "$DEPLOY_APP_SERVICE" == "y" ]]; then
+  read -rp "$(echo -e "${CYAN}App Service name${NC} [${RG_NAME}-app]: ")" APP_NAME
+  APP_NAME="${APP_NAME:-${RG_NAME}-app}"
+
+  read -rp "$(echo -e "${CYAN}App Service Plan SKU${NC} [B1]: ")" APP_SERVICE_SKU
+  APP_SERVICE_SKU="${APP_SERVICE_SKU:-B1}"
+fi
+
 echo ""
 step "Configuration summary"
 echo "  Resource Group:    $RG_NAME"
@@ -147,6 +162,9 @@ echo "  AI Project:        $AI_PROJECT_NAME"
 echo "  Model Deployment:  $MODEL_DEPLOYMENT_NAME"
 echo "  Company Name:      $COMPANY_NAME"
 echo "  Port:              $PORT"
+if [[ "$DEPLOY_APP_SERVICE" == "y" ]]; then
+  echo "  App Service:       $APP_NAME (SKU: $APP_SERVICE_SKU)"
+fi
 echo ""
 
 read -rp "$(echo -e "${YELLOW}Proceed with deployment? (y/N): ${NC}")" CONFIRM
@@ -166,7 +184,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Resource Group
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 1/9 — Resource Group"
+header "Step 1/10 — Resource Group"
 
 if az group show --name "$RG_NAME" >/dev/null 2>&1; then
   info "Resource group '$RG_NAME' already exists, skipping."
@@ -179,7 +197,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. Azure Communication Services
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 2/9 — Azure Communication Services"
+header "Step 2/10 — Azure Communication Services"
 
 if az communication show --name "$ACS_NAME" --resource-group "$RG_NAME" >/dev/null 2>&1; then
   info "ACS resource '$ACS_NAME' already exists, skipping creation."
@@ -214,7 +232,7 @@ ACS_CHANNEL_REG_ID="${ACS_CHANNEL_REG_ID:-<your-whatsapp-channel-registration-id
 # ─────────────────────────────────────────────────────────────────────────────
 # 3. Azure Cosmos DB
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 3/9 — Azure Cosmos DB"
+header "Step 3/10 — Azure Cosmos DB"
 
 if az cosmosdb show --name "$COSMOS_ACCOUNT" --resource-group "$RG_NAME" >/dev/null 2>&1; then
   info "Cosmos DB account '$COSMOS_ACCOUNT' already exists, skipping creation."
@@ -290,7 +308,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. Azure AI Search
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 4/9 — Azure AI Search"
+header "Step 4/10 — Azure AI Search"
 
 if az search service show --name "$SEARCH_NAME" --resource-group "$RG_NAME" >/dev/null 2>&1; then
   info "AI Search service '$SEARCH_NAME' already exists, skipping creation."
@@ -406,7 +424,7 @@ success "Fees data uploaded (12 records)."
 # ─────────────────────────────────────────────────────────────────────────────
 # 5. Azure AI Foundry Hub + Project
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 5/9 — Azure AI Foundry Hub & Project"
+header "Step 5/10 — Azure AI Foundry Hub & Project"
 
 # Check if az ml extension is installed
 if ! az extension show --name ml >/dev/null 2>&1; then
@@ -492,7 +510,7 @@ success "AI Foundry project ready."
 # ─────────────────────────────────────────────────────────────────────────────
 # 6. Deploy GPT-4o model
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 6/9 — Model Deployment"
+header "Step 6/10 — Model Deployment"
 
 # Get the AI Services account associated with the hub
 AISERVICES_RESOURCE=$(az ml workspace show --name "$AI_HUB_NAME" --resource-group "$RG_NAME" \
@@ -538,7 +556,7 @@ success "Model deployment step complete."
 # ─────────────────────────────────────────────────────────────────────────────
 # 7. Create AI Foundry Agents
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 7/9 — AI Foundry Agents"
+header "Step 7/10 — AI Foundry Agents"
 
 info "Creating AI Search connection in AI Foundry project..."
 
@@ -948,7 +966,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # 8. RBAC
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 8/9 — RBAC Configuration"
+header "Step 8/10 — RBAC Configuration"
 
 if [ -n "$PRINCIPAL_ID" ]; then
   # Get subscription ID
@@ -978,7 +996,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # 9. Generate .env file
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 9/9 — Environment File"
+header "Step 9/10 — Environment File"
 
 ENV_FILE="$PROJECT_ROOT/backend/.env"
 
@@ -1024,6 +1042,167 @@ ENV_EOF
 success "backend/.env created."
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 10. Azure App Service (optional)
+# ─────────────────────────────────────────────────────────────────────────────
+if [[ "$DEPLOY_APP_SERVICE" == "y" ]]; then
+  header "Step 10/10 — Azure App Service"
+
+  APP_SERVICE_PLAN="${APP_NAME}-plan"
+
+  # Create App Service Plan
+  if az appservice plan show --name "$APP_SERVICE_PLAN" --resource-group "$RG_NAME" >/dev/null 2>&1; then
+    info "App Service Plan '$APP_SERVICE_PLAN' already exists, skipping creation."
+  else
+    info "Creating App Service Plan '$APP_SERVICE_PLAN' (${APP_SERVICE_SKU}, Linux)..."
+    az appservice plan create \
+      --name "$APP_SERVICE_PLAN" \
+      --resource-group "$RG_NAME" \
+      --location "$LOCATION" \
+      --sku "$APP_SERVICE_SKU" \
+      --is-linux \
+      -o none
+    success "App Service Plan created."
+  fi
+
+  # Create Web App
+  if az webapp show --name "$APP_NAME" --resource-group "$RG_NAME" >/dev/null 2>&1; then
+    info "Web App '$APP_NAME' already exists, skipping creation."
+  else
+    info "Creating Web App '$APP_NAME' (Node.js 20 LTS)..."
+    az webapp create \
+      --name "$APP_NAME" \
+      --resource-group "$RG_NAME" \
+      --plan "$APP_SERVICE_PLAN" \
+      --runtime "NODE:20-lts" \
+      -o none
+    success "Web App created."
+  fi
+
+  # Configure app settings
+  info "Configuring app settings..."
+  az webapp config appsettings set \
+    --name "$APP_NAME" \
+    --resource-group "$RG_NAME" \
+    --settings \
+      NODE_ENV=production \
+      PORT=3000 \
+      SCM_DO_BUILD_DURING_DEPLOYMENT=true \
+      ACS_CONNECTION_STRING="$ACS_CONNECTION_STRING" \
+      ACS_CHANNEL_REGISTRATION_ID="$ACS_CHANNEL_REG_ID" \
+      COMPANY_NAME="$COMPANY_NAME" \
+      AZURE_AI_PROJECT_ENDPOINT="$AI_PROJECT_ENDPOINT" \
+      AZURE_AI_AGENT_ID="$TRIAGE_AGENT_ID" \
+      COSMOS_DB_ENDPOINT="https://${COSMOS_ACCOUNT}.documents.azure.com:443/" \
+      COSMOS_DB_DATABASE_NAME="$COSMOS_DB_NAME" \
+      COSMOS_DB_CONTAINER_NAME="$COSMOS_CONTAINER_NAME" \
+    -o none
+  success "App settings configured."
+
+  # Set startup command
+  az webapp config set \
+    --name "$APP_NAME" \
+    --resource-group "$RG_NAME" \
+    --startup-file "node index.js" \
+    -o none
+
+  # Build and deploy
+  step "Building and deploying to App Service"
+
+  STAGING_DIR=$(mktemp -d)
+  info "Staging directory: $STAGING_DIR"
+
+  # Build TypeScript
+  info "Compiling TypeScript..."
+  cd "$PROJECT_ROOT/backend"
+  npx tsc
+
+  # Copy compiled output
+  cp -r dist/* "$STAGING_DIR/"
+
+  # Copy static assets
+  if [ -d "src/public" ]; then
+    cp -r src/public "$STAGING_DIR/public"
+  fi
+
+  # Copy data files
+  if [ -d "data" ]; then
+    cp -r data "$STAGING_DIR/data"
+  fi
+
+  # Create standalone package.json (no workspace references)
+  node -e "
+    const pkg = require('./package.json');
+    const standalone = {
+      name: pkg.name,
+      version: pkg.version,
+      private: true,
+      scripts: { start: 'node index.js' },
+      dependencies: pkg.dependencies,
+      engines: { node: '>=20.0.0' }
+    };
+    require('fs').writeFileSync('$STAGING_DIR/package.json', JSON.stringify(standalone, null, 2));
+  "
+
+  # Deploy using az webapp up
+  info "Deploying to App Service (Oryx build will run npm install)..."
+  cd "$STAGING_DIR"
+  az webapp up \
+    --name "$APP_NAME" \
+    --resource-group "$RG_NAME" \
+    --runtime "NODE:20-lts" \
+    -o none
+
+  cd "$PROJECT_ROOT"
+  rm -rf "$STAGING_DIR"
+
+  APP_URL="https://${APP_NAME}.azurewebsites.net"
+  success "App deployed to $APP_URL"
+
+  # Enable system-assigned managed identity and assign RBAC
+  info "Enabling system-assigned managed identity..."
+  az webapp identity assign \
+    --name "$APP_NAME" \
+    --resource-group "$RG_NAME" \
+    -o none
+
+  APP_IDENTITY=$(az webapp identity show \
+    --name "$APP_NAME" \
+    --resource-group "$RG_NAME" \
+    --query principalId -o tsv)
+
+  if [ -n "$APP_IDENTITY" ]; then
+    SUB_ID=$(az account show --query id -o tsv)
+
+    info "Assigning 'Cosmos DB Built-in Data Contributor' role to App Service identity..."
+    az cosmosdb sql role assignment create \
+      --account-name "$COSMOS_ACCOUNT" \
+      --resource-group "$RG_NAME" \
+      --role-definition-name "Cosmos DB Built-in Data Contributor" \
+      --scope "/" \
+      --principal-id "$APP_IDENTITY" \
+      -o none 2>/dev/null || info "Cosmos DB role already assigned."
+
+    info "Assigning 'Azure AI Developer' role to App Service identity..."
+    az role assignment create \
+      --assignee "$APP_IDENTITY" \
+      --role "Azure AI Developer" \
+      --scope "/subscriptions/${SUB_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.MachineLearningServices/workspaces/${AI_PROJECT_NAME}" \
+      -o none 2>/dev/null || info "AI Developer role already assigned."
+
+    info "Assigning 'Cognitive Services OpenAI User' role to App Service identity..."
+    az role assignment create \
+      --assignee "$APP_IDENTITY" \
+      --role "Cognitive Services OpenAI User" \
+      --scope "/subscriptions/${SUB_ID}/resourceGroups/${RG_NAME}" \
+      -o none 2>/dev/null || info "Cognitive Services role already assigned."
+
+    success "App Service managed identity RBAC configured."
+  fi
+else
+  info "Skipping App Service deployment (not selected)."
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Install dependencies
 # ─────────────────────────────────────────────────────────────────────────────
 step "Installing npm dependencies"
@@ -1044,6 +1223,9 @@ echo "  • AI Search:         $SEARCH_NAME (indexes: students, grades, fees)"
 echo "  • AI Hub:            $AI_HUB_NAME"
 echo "  • AI Project:        $AI_PROJECT_NAME"
 echo "  • Model:             $MODEL_DEPLOYMENT_NAME"
+if [[ "$DEPLOY_APP_SERVICE" == "y" ]]; then
+  echo "  • App Service:       $APP_NAME → https://${APP_NAME}.azurewebsites.net"
+fi
 echo ""
 echo -e "${GREEN}AI Agents:${NC}"
 echo "  • Grades Agent:      $GRADES_AGENT_ID"
@@ -1065,11 +1247,18 @@ if [ "$ACS_CHANNEL_REG_ID" = "<your-whatsapp-channel-registration-id>" ]; then
 fi
 
 echo -e "${BOLD}Next steps:${NC}"
-echo "  1. Start the server:   npm run backend"
-echo "  2. Open the demo UI:   http://localhost:${PORT}/"
-echo "  3. Set up port forwarding (VS Code Ports tab → forward port ${PORT} → set Public)"
-echo "  4. Configure Event Grid webhook (Azure Portal → ACS → Events → + Event Subscription)"
-echo "     • Endpoint: https://<your-forwarded-url>/api/webhooks/acs"
-echo "     • Events:   AdvancedMessageReceived, AdvancedMessageDeliveryStatusUpdated"
+if [[ "$DEPLOY_APP_SERVICE" == "y" ]]; then
+  echo "  1. Open the demo UI:   https://${APP_NAME}.azurewebsites.net/"
+  echo "  2. Configure Event Grid webhook (Azure Portal → ACS → Events → + Event Subscription)"
+  echo "     • Endpoint: https://${APP_NAME}.azurewebsites.net/api/webhooks/acs"
+  echo "     • Events:   AdvancedMessageReceived, AdvancedMessageDeliveryStatusUpdated"
+else
+  echo "  1. Start the server:   npm run backend"
+  echo "  2. Open the demo UI:   http://localhost:${PORT}/"
+  echo "  3. Set up port forwarding (VS Code Ports tab → forward port ${PORT} → set Public)"
+  echo "  4. Configure Event Grid webhook (Azure Portal → ACS → Events → + Event Subscription)"
+  echo "     • Endpoint: https://<your-forwarded-url>/api/webhooks/acs"
+  echo "     • Events:   AdvancedMessageReceived, AdvancedMessageDeliveryStatusUpdated"
+fi
 echo ""
 echo -e "${GREEN}Happy demoing! 🚀${NC}"

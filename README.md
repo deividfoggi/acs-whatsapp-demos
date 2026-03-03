@@ -8,13 +8,17 @@ WhatsApp use case demos powered by [Azure Communication Services Advanced Messag
 |---|----------|--------|
 | 1 | **Simple Messaging** — Send and receive text messages between the business and WhatsApp users | ✅ Available |
 | 2 | **Template Messages** — Browse and send pre-approved WhatsApp template messages with dynamic parameters and Quick Reply buttons | ✅ Available |
-| 3 | **Payment Flow** — Parents pay tuition/fees via WhatsApp Flows | 🚧 In Progress |
+| 3 | **AI Agent (Triage + Connected Agents)** — Inbound WhatsApp messages are routed to an Azure AI Foundry triage agent that delegates to specialized agents | ✅ Available |
+| 4 | **Payment Flow** — Parents pay tuition/fees via WhatsApp Flows | 🚧 In Progress |
 
 ## Tech Stack
 
 - **Runtime**: Node.js 20+ / TypeScript
 - **Backend**: Express
 - **Messaging**: Azure Communication Services (`@azure-rest/communication-messages`)
+- **AI Agents**: Azure AI Foundry (`@azure/ai-projects`) — Connected Agents pattern
+- **State Store**: Azure Cosmos DB (`@azure/cosmos`) — phone→thread mapping
+- **Auth**: `@azure/identity` (DefaultAzureCredential for Entra ID / RBAC)
 - **WhatsApp Flows**: Meta Flow JSON v7.3
 - **Events**: Azure Event Grid webhooks
 - **Validation**: Zod schemas
@@ -38,6 +42,8 @@ Before you begin, make sure you have the following:
 | **Azure Communication Services resource** | See step 2 below |
 | **Meta Business Account + WhatsApp Business phone number** | See step 2 below |
 | **A personal WhatsApp phone number** | To send/receive test messages (your personal phone works) |
+| **Azure AI Foundry project** *(optional — for AI agents)* | See [Set Up AI Foundry Agent](#set-up-azure-ai-foundry-agent) below |
+| **Azure Cosmos DB account** *(optional — for AI agents)* | See [Set Up Cosmos DB](#set-up-azure-cosmos-db) below |
 
 ### 2. Set Up Meta Business Account, WhatsApp Number & ACS
 
@@ -112,6 +118,23 @@ COMPANY_NAME=Contoso School
 # Server
 PORT=3000
 NODE_ENV=development
+
+# ==================== AI Foundry (optional) ====================
+# Azure AI Foundry project endpoint (e.g. https://<project>.services.ai.azure.com/api/projects/<project>)
+AZURE_AI_PROJECT_ENDPOINT=https://<your-ai-foundry-project>.services.ai.azure.com/api/projects/<project-name>
+
+# The ID of the triage agent in AI Foundry
+AZURE_AI_AGENT_ID=<your-triage-agent-id>
+
+# ==================== Cosmos DB (optional — required for AI agents) ====================
+# Use EITHER connection string (local dev) OR endpoint (production with DefaultAzureCredential).
+# If both are set, connection string takes priority.
+COSMOS_DB_CONNECTION_STRING=AccountEndpoint=https://<your-cosmos-account>.documents.azure.com:443/;AccountKey=<your-key>
+# COSMOS_DB_ENDPOINT=https://<your-cosmos-account>.documents.azure.com:443/
+
+# Database and container names for phone→thread mapping
+COSMOS_DB_DATABASE_NAME=whatsapp-agents
+COSMOS_DB_CONTAINER_NAME=conversations
 ```
 
 | Variable | Required | Description |
@@ -121,6 +144,14 @@ NODE_ENV=development
 | `COMPANY_NAME` | Yes | Display name used in the UI and messages |
 | `PORT` | No | Server port (default: `3000`) |
 | `NODE_ENV` | No | `development` or `production` (default: `development`) |
+| `AZURE_AI_PROJECT_ENDPOINT` | No* | Azure AI Foundry project endpoint URL |
+| `AZURE_AI_AGENT_ID` | No* | ID of the triage agent created in AI Foundry |
+| `COSMOS_DB_CONNECTION_STRING` | No* | Cosmos DB connection string (key-based auth for local dev) |
+| `COSMOS_DB_ENDPOINT` | No* | Cosmos DB endpoint (used with `DefaultAzureCredential` when no connection string) |
+| `COSMOS_DB_DATABASE_NAME` | No | Database name (default: `whatsapp-agents`) |
+| `COSMOS_DB_CONTAINER_NAME` | No | Container name (default: `conversations`) |
+
+> \* Required only when using the AI Agent feature. If these variables are not set, inbound messages are stored but not routed to the AI agent.
 
 ### 6. Start the Backend Server
 
@@ -191,6 +222,193 @@ You will see a home page with cards for each available demo.
 4. Click **Send**. The template message is delivered to the recipient's WhatsApp.
 5. If the template includes Quick Reply buttons, button clicks are captured and displayed in the delivery status panel.
 
+#### Demo 3 — AI Agent (Triage + Connected Agents)
+
+This demo requires the AI Foundry and Cosmos DB setup described below. Once configured, every inbound WhatsApp message is automatically routed to the triage agent, which delegates to specialized agents and sends the response back via WhatsApp.
+
+1. Send a message from your personal WhatsApp to the registered business phone number.
+2. The message arrives via Event Grid → the webhook stores it and forwards it to the AI Foundry triage agent.
+3. The triage agent determines the intent and may hand off to a Connected Agent (e.g., a payment specialist, an enrollment specialist).
+4. The agent's text response is sent back to the user's WhatsApp via ACS.
+5. The full conversation thread is visible in the **Simple Messaging** demo panel.
+
+> If `AZURE_AI_PROJECT_ENDPOINT`, `AZURE_AI_AGENT_ID`, and a Cosmos DB connection are not set, inbound messages are stored but not processed by the AI agent.
+
+---
+
+## AI Layer Setup
+
+The AI layer adds intelligent agent-based routing to inbound WhatsApp messages. It uses **Azure AI Foundry** for the agent runtime and **Azure Cosmos DB** for persisting conversation state (phone → thread mapping).
+
+### Architecture Overview
+
+```
+WhatsApp User
+     │
+     ▼
+Azure Event Grid ──▶ Express Webhook (/api/webhooks/acs)
+                          │
+                          ├── Store message (in-memory)
+                          │
+                          └── (if agent configured) ──▶ Agent Service
+                                                           │
+                                    ┌──────────────────────┤
+                                    ▼                      ▼
+                              Cosmos DB              AI Foundry
+                          (phone→thread map)      (Triage Agent)
+                                                       │
+                                                       ├── Connected Agent A
+                                                       ├── Connected Agent B
+                                                       └── ...
+                                                           │
+                                                           ▼
+                                                   Agent Response
+                                                           │
+                                                           ▼
+                                                  ACS Send Message
+                                                  (back to WhatsApp)
+```
+
+### Set Up Azure Cosmos DB
+
+Cosmos DB stores the mapping between each WhatsApp phone number and its AI Foundry thread ID. This ensures continuity — the same thread is reused across all interactions with a given user.
+
+#### 1. Create the Cosmos DB Account
+
+```bash
+# Create a resource group (or use an existing one)
+az group create --name rg-whatsapp-demo --location eastus2
+
+# Create a Cosmos DB account (NoSQL API)
+az cosmosdb create \
+  --name <your-cosmos-account> \
+  --resource-group rg-whatsapp-demo \
+  --kind GlobalDocumentDB \
+  --default-consistency-level Session
+```
+
+#### 2. Create the Database and Container
+
+The application references the database and container directly (it does **not** auto-create them) to avoid requiring control-plane RBAC permissions.
+
+```bash
+# Create the database
+az cosmosdb sql database create \
+  --account-name <your-cosmos-account> \
+  --resource-group rg-whatsapp-demo \
+  --name whatsapp-agents
+
+# Create the container with partition key /phoneNumber
+az cosmosdb sql container create \
+  --account-name <your-cosmos-account> \
+  --resource-group rg-whatsapp-demo \
+  --database-name whatsapp-agents \
+  --name conversations \
+  --partition-key-path "/phoneNumber"
+```
+
+#### 3. Configure Authentication
+
+You can use **either** approach:
+
+| Method | Env Variable | Best For |
+|--------|--------------|----------|
+| Connection string (key-based) | `COSMOS_DB_CONNECTION_STRING` | Local development |
+| Entra ID / RBAC | `COSMOS_DB_ENDPOINT` | Production / passwordless |
+
+**Key-based auth:**
+
+```bash
+# Get the connection string
+az cosmosdb keys list \
+  --name <your-cosmos-account> \
+  --resource-group rg-whatsapp-demo \
+  --type connection-strings \
+  --query "connectionStrings[0].connectionString" -o tsv
+```
+
+Set the result as `COSMOS_DB_CONNECTION_STRING` in `backend/.env`.
+
+**Entra ID auth (recommended for production):**
+
+1. Set `COSMOS_DB_ENDPOINT` in `backend/.env` (e.g., `https://<account>.documents.azure.com:443/`).
+2. Assign the **Cosmos DB Built-in Data Contributor** role to your identity:
+
+```bash
+az cosmosdb sql role assignment create \
+  --account-name <your-cosmos-account> \
+  --resource-group rg-whatsapp-demo \
+  --role-definition-name "Cosmos DB Built-in Data Contributor" \
+  --scope "/" \
+  --principal-id <your-principal-id>
+```
+
+3. The application uses `DefaultAzureCredential` to authenticate automatically (works with Azure CLI, Managed Identity, VS Code, etc.).
+
+#### Cosmos DB Data Model
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Same as `phoneNumber` (document ID) |
+| `phoneNumber` | `string` | Phone number in E.164 format (partition key) |
+| `threadId` | `string` | AI Foundry thread ID |
+| `createdAt` | `string` | ISO 8601 timestamp of creation |
+| `updatedAt` | `string` | ISO 8601 timestamp of last interaction |
+
+### Set Up Azure AI Foundry Agent
+
+Azure AI Foundry provides the agent runtime. The project uses the **Connected Agents** pattern: a single **triage agent** receives every inbound message and delegates to specialized agents based on user intent.
+
+#### 1. Create an AI Foundry Project
+
+1. Go to [Azure AI Foundry](https://ai.azure.com/).
+2. Create a new **project** (or use an existing one).
+3. Note the **project endpoint URL** — it looks like `https://<project>.services.ai.azure.com/api/projects/<project-name>`.
+4. Set this as `AZURE_AI_PROJECT_ENDPOINT` in `backend/.env`.
+
+#### 2. Create the Triage Agent
+
+1. In the AI Foundry portal, navigate to your project → **Agents**.
+2. Create a new agent:
+   - **Name**: `triage-agent` (or any descriptive name)
+   - **Model**: Choose an appropriate model (e.g., `gpt-4o`)
+   - **Instructions**: Describe the agent's role — e.g., "You are a school assistant. Route payment questions to the payment agent, enrollment questions to the enrollment agent, etc."
+3. After creation, copy the **Agent ID** (e.g., `asst_OeqZCNjTzJqG3cxTcuRBN23u`).
+4. Set this as `AZURE_AI_AGENT_ID` in `backend/.env`.
+
+#### 3. Create Specialized (Connected) Agents
+
+1. Create additional agents for each domain (e.g., payment agent, enrollment agent, attendance agent).
+2. Give each agent specific instructions and tools relevant to its domain.
+3. In the **triage agent**, add each specialized agent as a **Connected Agent** tool — the triage agent will hand off conversations to them automatically based on intent.
+
+#### 4. Configure RBAC
+
+The identity running the application needs the **Azure AI Developer** role on the AI Foundry project:
+
+```bash
+az role assignment create \
+  --assignee <your-principal-id> \
+  --role "Azure AI Developer" \
+  --scope /subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.MachineLearningServices/workspaces/<project-name>
+```
+
+For local development, `DefaultAzureCredential` will use your Azure CLI or VS Code credentials.
+
+### How the AI Flow Works
+
+1. **Inbound message arrives** via Event Grid → `POST /api/webhooks/acs`.
+2. The webhook handler checks `isAgentConfigured()` — if AI Foundry + Cosmos DB are configured, it proceeds.
+3. **`agent.service.ts`** looks up the phone number in Cosmos DB:
+   - If a thread exists, it reuses it (conversation continuity).
+   - If not, it creates a new AI Foundry thread and saves the mapping.
+4. The user's message is appended to the thread.
+5. A **run** is created against the triage agent and polled until completion.
+   - If the triage agent invokes a Connected Agent tool, the platform handles the handoff transparently within the same run.
+6. The latest assistant message is extracted from the thread.
+7. The response is sent back to the user's WhatsApp via ACS.
+8. The conversation timestamp is updated in Cosmos DB.
+
 ---
 
 ## Project Structure
@@ -204,12 +422,18 @@ backend/              # Express API server
     routes/           # API route handlers
       messages.ts     #   Send/receive text messages
       templates.ts    #   WhatsApp template operations
-      webhooks.ts     #   Event Grid webhook handler
+      webhooks.ts     #   Event Grid webhook handler + AI agent routing
       flows.ts        #   WhatsApp Flows data endpoint
       students.ts     #   Student lookup
       fees.ts         #   Fee queries
       payments.ts     #   Payment processing
-    services/         # Business logic layer (in-memory dummy data)
+    services/         # Business logic layer
+      agent.service.ts      # AI Foundry triage agent integration
+      cosmos.service.ts     # Cosmos DB conversation state persistence
+      conversation.service.ts # In-memory conversation store + SSE events
+      messaging.service.ts  # ACS message sending
+      payment.service.ts    # Payment processing (mock)
+      student.service.ts    # Student data (mock)
     flows/            # WhatsApp Flow JSON definitions
     types/            # Shared TypeScript interfaces
     data/             # Mock/in-memory data
@@ -252,3 +476,9 @@ This repo includes specialized Copilot agents under `.github/agents/`:
 | Messages not arriving in the demo UI | Confirm the Event Grid subscription is active and the port forwarding tunnel is running |
 | `ERR_MODULE_NOT_FOUND` on start | Run `npm install` from the root folder to install workspace dependencies |
 | Port already in use | Change `PORT` in `backend/.env` or stop the process using port 3000 |
+| "AI Foundry agent variables not set" warning | Set `AZURE_AI_PROJECT_ENDPOINT` and `AZURE_AI_AGENT_ID` in `.env` (or leave unset to disable AI) |
+| "No Cosmos DB connection configured" warning | Set `COSMOS_DB_CONNECTION_STRING` or `COSMOS_DB_ENDPOINT` in `.env` |
+| Agent run fails with `authorization` error | Ensure your identity has the **Azure AI Developer** role on the AI Foundry project |
+| Cosmos DB 403 Forbidden | Assign the **Cosmos DB Built-in Data Contributor** role, or use a connection string |
+| Cosmos DB 404 on read/write | Pre-create the database (`whatsapp-agents`) and container (`conversations`) — the app does not auto-create them |
+| "Agent run failed with status: failed" | Check the AI Foundry portal for agent run logs; ensure the model deployment is active and the agent instructions are valid |

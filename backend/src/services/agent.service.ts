@@ -39,8 +39,37 @@ function getProjectClient(): AIProjectClient {
  */
 async function ensureThread(phone: string): Promise<AgentConversationState> {
   const existing = await getConversationState(phone);
-  if (existing) return existing;
 
+  if (existing) {
+    const lastActivity = new Date(existing.updatedAt).getTime();
+    const idleMs = Date.now() - lastActivity;
+    const idleSec = Math.round(idleMs / 1000);
+
+    if (idleMs > CONFIG.AGENT_THREAD_IDLE_TIMEOUT_MS) {
+      // Thread has been idle beyond the threshold — rotate to a fresh thread
+      const client = getProjectClient();
+      const newThread = await client.agents.threads.create();
+      const oldThreadId = existing.threadId;
+
+      existing.threadId = newThread.id;
+      existing.createdAt = new Date().toISOString();
+      existing.updatedAt = existing.createdAt;
+      await upsertConversationState(existing);
+
+      console.log(
+        `[Agent] Thread rotated for ${phone} ` +
+          `(old: ${oldThreadId}, new: ${newThread.id}, idle: ${idleSec}s)`
+      );
+      return existing;
+    }
+
+    console.log(
+      `[Agent] Reusing thread ${existing.threadId} for ${phone} (idle: ${idleSec}s)`
+    );
+    return existing;
+  }
+
+  // No existing state — create the very first thread for this phone number
   const client = getProjectClient();
   const thread = await client.agents.threads.create();
 

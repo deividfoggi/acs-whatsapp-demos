@@ -217,9 +217,9 @@ export interface AgentConversationState {
   /** Phone number in E.164 format — also the partition key. */
   readonly phoneNumber: string;
   /** AI Foundry thread ID for this conversation. */
-  readonly threadId: string;
+  threadId: string;
   /** ISO 8601 timestamp when the thread was created. */
-  readonly createdAt: string;
+  createdAt: string;
   /** ISO 8601 timestamp of the last interaction. */
   updatedAt: string;
 }

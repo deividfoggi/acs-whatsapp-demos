@@ -53,6 +53,18 @@ export const CONFIG = {
 
   /** Cosmos DB container name for phone→thread mapping */
   COSMOS_DB_CONTAINER_NAME: process.env.COSMOS_DB_CONTAINER_NAME ?? "conversations",
+
+  // ==================== Agent Thread Management ====================
+
+  /**
+   * Maximum idle time (in milliseconds) before a new AI Foundry thread is
+   * created for the same phone number.  Defaults to 5 minutes (300 000 ms).
+   * Set via the AGENT_THREAD_IDLE_TIMEOUT_MS environment variable.
+   */
+  AGENT_THREAD_IDLE_TIMEOUT_MS: parseInt(
+    process.env.AGENT_THREAD_IDLE_TIMEOUT_MS ?? "300000",
+    10
+  ),
 } as const;
 
 /**

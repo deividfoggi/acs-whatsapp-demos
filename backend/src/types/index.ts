@@ -204,6 +204,28 @@ export interface FlowsEndpointResponse {
 
 // ==================== Template Messaging Types ====================
 
+// ==================== AI Foundry Agent Types ====================
+
+/**
+ * Conversation state stored in Cosmos DB, mapping WhatsApp phone numbers
+ * to AI Foundry threads. Each phone number gets a single persistent thread
+ * that is reused across all interactions with the triage agent.
+ */
+export interface AgentConversationState {
+  /** Cosmos DB document ID (set to phoneNumber on upsert). */
+  id?: string;
+  /** Phone number in E.164 format — also the partition key. */
+  readonly phoneNumber: string;
+  /** AI Foundry thread ID for this conversation. */
+  readonly threadId: string;
+  /** ISO 8601 timestamp when the thread was created. */
+  readonly createdAt: string;
+  /** ISO 8601 timestamp of the last interaction. */
+  updatedAt: string;
+}
+
+// ==================== Template Messaging Types ====================
+
 /**
  * A single template parameter value passed to the ACS SDK.
  */

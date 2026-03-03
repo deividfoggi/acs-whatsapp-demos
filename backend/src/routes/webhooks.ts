@@ -6,8 +6,9 @@ import {
   InteractiveReply,
   MessageDirection,
 } from "../types/index.js";
-import { maskPhone } from "../services/messaging.service.js";
+import { maskPhone, sendTextMessage } from "../services/messaging.service.js";
 import { addMessage, updateMessageStatus } from "../services/conversation.service.js";
+import { processInboundMessage, isAgentConfigured } from "../services/agent.service.js";
 
 const router = Router();
 
@@ -82,6 +83,21 @@ router.post("/", (req: Request, res: Response) => {
           messageId,
           interactiveReply ? { interactiveReply } : undefined
         );
+
+        // ── Route through AI Foundry agent (fire-and-forget) ──────────
+        if (isAgentConfigured()) {
+          handleAgentResponse(phone, messageText).catch((err) => {
+            console.error(
+              `[Webhook] Agent processing failed for ${maskPhone(phone)}:`,
+              err
+            );
+          });
+        } else {
+          console.warn(
+            `[Webhook] Agent is not configured — inbound message from ${maskPhone(phone)} was stored but not processed. ` +
+              `Ensure AZURE_AI_PROJECT_ENDPOINT, AZURE_AI_AGENT_ID, and COSMOS_DB_CONNECTION_STRING (or COSMOS_DB_ENDPOINT) are set.`
+          );
+        }
       }
 
       // Delivery status update — track in conversation store and emit via SSE
@@ -103,5 +119,48 @@ router.post("/", (req: Request, res: Response) => {
 
   res.status(200).send();
 });
+
+// ── Agent response helper (runs asynchronously after 200 is returned) ──
+
+/**
+ * Sends the inbound message to the AI Foundry triage agent, waits for the
+ * response, and sends it back to the user via ACS WhatsApp.
+ *
+ * This function is called in a fire-and-forget fashion so that the
+ * Event Grid webhook always returns 200 immediately.
+ */
+async function handleAgentResponse(
+  phone: string,
+  messageText: string
+): Promise<void> {
+  try {
+    const agentReply = await processInboundMessage(phone, messageText);
+
+    const outboundId = await sendTextMessage(phone, agentReply);
+
+    addMessage(phone, MessageDirection.Outbound, agentReply, outboundId);
+
+    console.log(
+      `[Webhook] Agent reply sent to ${maskPhone(phone)} (msgId=${outboundId})`
+    );
+  } catch (error) {
+    console.error(
+      `[Webhook] Failed to process agent response for ${maskPhone(phone)}:`,
+      error
+    );
+
+    // Best-effort: notify the user that something went wrong
+    try {
+      const errorMsg =
+        "Sorry, I'm having trouble processing your request right now. Please try again in a moment.";
+      const errorMsgId = await sendTextMessage(phone, errorMsg);
+      addMessage(phone, MessageDirection.Outbound, errorMsg, errorMsgId);
+    } catch {
+      console.error(
+        `[Webhook] Could not send error message to ${maskPhone(phone)}`
+      );
+    }
+  }
+}
 
 export default router;

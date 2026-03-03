@@ -23,6 +23,36 @@ export const CONFIG = {
   NODE_ENV: (process.env.NODE_ENV ?? "development") as
     | "development"
     | "production",
+
+  // ==================== AI Foundry ====================
+
+  /** Azure AI Foundry project endpoint URL */
+  AZURE_AI_PROJECT_ENDPOINT: process.env.AZURE_AI_PROJECT_ENDPOINT ?? "",
+
+  /**
+   * The ID of the triage agent in AI Foundry.
+   * This agent receives every inbound message and is responsible for
+   * handing off the conversation to the appropriate specialized agent
+   * via Connected Agent tools.
+   */
+  AZURE_AI_AGENT_ID: process.env.AZURE_AI_AGENT_ID ?? "",
+
+  // ==================== Cosmos DB ====================
+
+  /**
+   * Cosmos DB connection string (preferred for local dev).
+   * If empty, the service falls back to COSMOS_DB_ENDPOINT + DefaultAzureCredential.
+   */
+  COSMOS_DB_CONNECTION_STRING: process.env.COSMOS_DB_CONNECTION_STRING ?? "",
+
+  /** Cosmos DB account endpoint (used with DefaultAzureCredential when no connection string). */
+  COSMOS_DB_ENDPOINT: process.env.COSMOS_DB_ENDPOINT ?? "",
+
+  /** Cosmos DB database name for conversation state */
+  COSMOS_DB_DATABASE_NAME: process.env.COSMOS_DB_DATABASE_NAME ?? "whatsapp-agents",
+
+  /** Cosmos DB container name for phone→thread mapping */
+  COSMOS_DB_CONTAINER_NAME: process.env.COSMOS_DB_CONTAINER_NAME ?? "conversations",
 } as const;
 
 /**
@@ -41,6 +71,22 @@ export function validateConfig(): void {
   if (missing.length > 0) {
     console.warn(
       `⚠️  Missing environment variables: ${missing.join(", ")}. Some features may not work.`
+    );
+  }
+
+  // AI Foundry agent warnings
+  if (!CONFIG.AZURE_AI_PROJECT_ENDPOINT || !CONFIG.AZURE_AI_AGENT_ID) {
+    console.warn(
+      "⚠️  AI Foundry agent variables (AZURE_AI_PROJECT_ENDPOINT, AZURE_AI_AGENT_ID) not set. " +
+        "Inbound messages will not be routed to the AI agent."
+    );
+  }
+
+  // Cosmos DB warnings
+  if (!CONFIG.COSMOS_DB_CONNECTION_STRING && !CONFIG.COSMOS_DB_ENDPOINT) {
+    console.warn(
+      "⚠️  No Cosmos DB connection configured (COSMOS_DB_CONNECTION_STRING or COSMOS_DB_ENDPOINT). " +
+        "Conversation state will not be persisted."
     );
   }
 }

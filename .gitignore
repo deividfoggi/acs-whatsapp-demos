@@ -23,3 +23,5 @@ npm-debug.log*
 
 # Coverage
 coverage/
+
+no_sync

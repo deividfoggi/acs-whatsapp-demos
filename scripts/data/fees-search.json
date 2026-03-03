@@ -1,0 +1,136 @@
+{
+  "value": [
+    {
+      "@search.action": "upload",
+      "id": "fee_001",
+      "studentId": "stu_001",
+      "studentName": "Lucas Silva",
+      "description": "March 2026 Tuition",
+      "amount": 1200.00,
+      "dueDate": "2026-03-10",
+      "status": "Pending",
+      "category": "Tuition"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_002",
+      "studentId": "stu_001",
+      "studentName": "Lucas Silva",
+      "description": "Materials Fee - Semester 1",
+      "amount": 350.00,
+      "dueDate": "2026-02-15",
+      "status": "Overdue",
+      "category": "Materials"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_003",
+      "studentId": "stu_002",
+      "studentName": "Maria Silva",
+      "description": "March 2026 Tuition",
+      "amount": 1500.00,
+      "dueDate": "2026-03-10",
+      "status": "Pending",
+      "category": "Tuition"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_004",
+      "studentId": "stu_002",
+      "studentName": "Maria Silva",
+      "description": "Field Trip - Science Museum",
+      "amount": 85.00,
+      "dueDate": "2026-03-20",
+      "status": "Pending",
+      "category": "Activities"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_005",
+      "studentId": "stu_003",
+      "studentName": "Pedro Santos",
+      "description": "March 2026 Tuition",
+      "amount": 1200.00,
+      "dueDate": "2026-03-10",
+      "status": "Pending",
+      "category": "Tuition"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_006",
+      "studentId": "stu_004",
+      "studentName": "Ana Santos",
+      "description": "March 2026 Tuition",
+      "amount": 1800.00,
+      "dueDate": "2026-03-10",
+      "status": "Pending",
+      "category": "Tuition"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_007",
+      "studentId": "stu_004",
+      "studentName": "Ana Santos",
+      "description": "Lab Fee - Chemistry",
+      "amount": 200.00,
+      "dueDate": "2026-02-28",
+      "status": "Overdue",
+      "category": "Lab Fees"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_008",
+      "studentId": "stu_001",
+      "studentName": "Lucas Silva",
+      "description": "February 2026 Tuition",
+      "amount": 1200.00,
+      "dueDate": "2026-02-10",
+      "status": "Paid",
+      "category": "Tuition"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_009",
+      "studentId": "stu_002",
+      "studentName": "Maria Silva",
+      "description": "February 2026 Tuition",
+      "amount": 1500.00,
+      "dueDate": "2026-02-10",
+      "status": "Paid",
+      "category": "Tuition"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_010",
+      "studentId": "stu_003",
+      "studentName": "Pedro Santos",
+      "description": "February 2026 Tuition",
+      "amount": 1200.00,
+      "dueDate": "2026-02-10",
+      "status": "Paid",
+      "category": "Tuition"
+    },
+    {
+      "@search.action": "upload",
+      "id": "fee_011",
+      "studentId": "stu_004",
+      "studentName": "Ana Santos",
+      "description": "February 2026 Tuition",
+      "amount": 1800.00,
+      "dueDate": "2026-02-10",
+      "status": "Paid",
+      "category": "Tuition"
+    },
+    {
+      "@search.action": "upload",
+      "id": "pay_001",
+      "studentId": "stu_001",
+      "studentName": "Lucas Silva",
+      "description": "Payment - February 2026 Tuition (Pix)",
+      "amount": 1200.00,
+      "dueDate": "2026-02-08",
+      "status": "Paid",
+      "category": "Payment"
+    }
+  ]
+}

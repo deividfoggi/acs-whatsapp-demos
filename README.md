@@ -23,6 +23,10 @@ WhatsApp use case demos powered by [Azure Communication Services Advanced Messag
 - **Events**: Azure Event Grid webhooks
 - **Validation**: Zod schemas
 
+## Architecture
+
+![C4 Container Diagram](architecture-c4.drawio.png)
+
 ---
 
 ## Quick Deploy (Recommended)

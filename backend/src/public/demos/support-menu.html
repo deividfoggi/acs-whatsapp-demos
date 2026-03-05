@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support Menu (URA)</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <span class="header__logo">📞</span>
+    <span class="header__title">Support Menu (URA)</span>
+    <a href="/">← Back to Demos</a>
+    <span class="header__subtitle" id="connectionStatus">Connecting…</span>
+  </header>
+
+  <div class="chat-app">
+    <!-- Sidebar: Conversation List + Controls -->
+    <aside class="sidebar">
+      <div class="sidebar__header">
+        Support Menu
+        <div class="toggle-container" style="margin-top: 8px;">
+          <label class="toggle-label" for="autoReplyToggle">
+            <span id="toggleStatusText">Auto-reply OFF</span>
+            <input type="checkbox" id="autoReplyToggle" class="toggle-checkbox" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Menu Preview -->
+      <div class="menu-preview" id="menuPreview">
+        <div class="menu-preview__title">📋 Menu Structure</div>
+        <div class="menu-preview__tree">
+          <div class="menu-tree__item">1️⃣ Informações sobre Matrícula</div>
+          <div class="menu-tree__sub">↳ 1. Matrícula de novo aluno</div>
+          <div class="menu-tree__sub">↳ 2. Documentos necessários</div>
+          <div class="menu-tree__sub">↳ 3. Prazos de matrícula</div>
+          <div class="menu-tree__item">2️⃣ Mensalidade e Pagamentos</div>
+          <div class="menu-tree__sub">↳ 1. Valor da mensalidade</div>
+          <div class="menu-tree__sub">↳ 2. Formas de pagamento</div>
+          <div class="menu-tree__sub">↳ 3. Consulta de inadimplência</div>
+          <div class="menu-tree__item">3️⃣ Notas e Boletins</div>
+          <div class="menu-tree__sub">↳ 1. Consultar notas atuais</div>
+          <div class="menu-tree__sub">↳ 2. Calendário de boletins</div>
+          <div class="menu-tree__sub">↳ 3. Solicitar histórico escolar</div>
+          <div class="menu-tree__item">4️⃣ Frequência e Faltas</div>
+          <div class="menu-tree__sub">↳ 1. Informar uma falta</div>
+          <div class="menu-tree__sub">↳ 2. Política de frequência</div>
+          <div class="menu-tree__sub">↳ 3. Solicitar saída antecipada</div>
+          <div class="menu-tree__item">5️⃣ Falar com um Atendente</div>
+          <div class="menu-tree__sub">↳ 1. Solicitar retorno de ligação</div>
+          <div class="menu-tree__sub">↳ 2. Enviar e-mail para o suporte</div>
+        </div>
+        <div class="menu-preview__hint">Users type "0" to return to the main menu and "#" to end the session.</div>
+      </div>
+
+      <!-- Conversations -->
+      <div class="sidebar__header" style="border-top: 1px solid var(--border);">Conversations</div>
+      <ul class="sidebar__list" id="conversationList">
+        <li class="sidebar__empty" id="emptyState">
+          No conversations yet.<br />
+          Enable auto-reply and wait for incoming WhatsApp messages…
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Chat Panel -->
+    <section class="chat-panel" id="chatPanel">
+      <div class="chat-panel__placeholder" id="chatPlaceholder">
+        <div style="text-align: center; max-width: 400px;">
+          <div style="font-size: 48px; margin-bottom: 16px;">📞</div>
+          <h3 style="margin-bottom: 8px; color: var(--text);">URA-Style Support Menu</h3>
+          <p style="color: var(--text-secondary); font-size: 14px;">
+            Toggle <strong>Auto-reply</strong> on to activate the automated support menu.
+            When a WhatsApp user sends a message, they'll receive a numbered menu
+            and can navigate using number replies — just like a phone IVR system.
+          </p>
+        </div>
+      </div>
+
+      <!-- Active chat (hidden by default) -->
+      <div id="activeChat" style="display:none; flex-direction:column;">
+        <div class="chat-panel__header">
+          <span id="chatPhoneDisplay"></span>
+          <span class="chat-panel__status" id="chatStatus"></span>
+        </div>
+        <div class="messages" id="messagesContainer"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/support-menu.js"></script>
+</body>
+</html>

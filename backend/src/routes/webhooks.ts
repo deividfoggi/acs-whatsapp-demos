@@ -9,6 +9,7 @@ import {
 import { maskPhone, sendTextMessage } from "../services/messaging.service.js";
 import { addMessage, updateMessageStatus } from "../services/conversation.service.js";
 import { processInboundMessage, isAgentConfigured } from "../services/agent.service.js";
+import { isSupportMenuEnabled, processMenuMessage } from "../services/support-menu.service.js";
 
 const router = Router();
 
@@ -84,8 +85,16 @@ router.post("/", (req: Request, res: Response) => {
           interactiveReply ? { interactiveReply } : undefined
         );
 
+        // ── Route through Support Menu URA (takes priority when enabled) ──
+        if (isSupportMenuEnabled()) {
+          handleSupportMenuResponse(phone, messageText).catch((err) => {
+            console.error(
+              `[Webhook] Support menu processing failed for ${maskPhone(phone)}:`,
+              err
+            );
+          });
         // ── Route through AI Foundry agent (fire-and-forget) ──────────
-        if (isAgentConfigured()) {
+        } else if (isAgentConfigured()) {
           handleAgentResponse(phone, messageText).catch((err) => {
             console.error(
               `[Webhook] Agent processing failed for ${maskPhone(phone)}:`,
@@ -160,6 +169,34 @@ async function handleAgentResponse(
         `[Webhook] Could not send error message to ${maskPhone(phone)}`
       );
     }
+  }
+}
+
+// ── Support Menu response helper (runs asynchronously after 200 is returned) ──
+
+/**
+ * Processes the inbound message through the URA-style support menu
+ * and sends the reply back to the user via ACS WhatsApp.
+ */
+async function handleSupportMenuResponse(
+  phone: string,
+  messageText: string
+): Promise<void> {
+  try {
+    const reply = processMenuMessage(phone, messageText);
+    if (!reply) return;
+
+    const outboundId = await sendTextMessage(phone, reply);
+    addMessage(phone, MessageDirection.Outbound, reply, outboundId);
+
+    console.log(
+      `[Webhook] Support menu reply sent to ${maskPhone(phone)} (msgId=${outboundId})`
+    );
+  } catch (error) {
+    console.error(
+      `[Webhook] Failed to send support menu reply to ${maskPhone(phone)}:`,
+      error
+    );
   }
 }
 

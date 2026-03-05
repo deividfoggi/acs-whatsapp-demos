@@ -8,6 +8,7 @@ import webhooksRouter from "./routes/webhooks.js";
 import flowsRouter from "./routes/flows.js";
 import messagesRouter from "./routes/messages.js";
 import templatesRouter from "./routes/templates.js";
+import supportMenuRouter from "./routes/support-menu.js";
 
 // Validate environment variables on startup
 validateConfig();
@@ -41,6 +42,7 @@ app.use("/api/webhooks/acs", webhooksRouter);
 app.use("/api/flows/endpoint", flowsRouter);
 app.use("/api/messages", messagesRouter);
 app.use("/api/templates", templatesRouter);
+app.use("/api/support-menu", supportMenuRouter);
 
 // Static files (demo UI) — mounted after API routes
 app.use(express.static(publicPath));

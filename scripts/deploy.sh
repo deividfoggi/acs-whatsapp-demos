@@ -7,15 +7,49 @@
 #
 # Usage:
 #   chmod +x scripts/deploy.sh
+#
+#   # Option A — Full deployment (provisions infra + configures everything):
 #   ./scripts/deploy.sh
+#
+#   # Option B — Terraform-first (infra already provisioned via Terraform):
+#   cd infra && terraform apply && cd ..
+#   ./scripts/deploy.sh --terraform
 #
 # Prerequisites:
 #   - Azure CLI (az) logged in
 #   - jq installed
 #   - Node.js 20+
 #   - npm
+#   - (Option B only) Terraform >= 1.5 with infra already applied
 # =============================================================================
 set -euo pipefail
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Parse CLI arguments
+# ─────────────────────────────────────────────────────────────────────────────
+USE_TERRAFORM=false
+for arg in "$@"; do
+  case "$arg" in
+    --terraform) USE_TERRAFORM=true ;;
+    -h|--help)
+      echo "Usage: $0 [--terraform]"
+      echo ""
+      echo "Options:"
+      echo "  --terraform    Skip infrastructure provisioning (expects Terraform outputs"
+      echo "                 from infra/ directory). Only creates AI Search indexes,"
+      echo "                 uploads sample data, creates AI agents, generates .env,"
+      echo "                 and optionally deploys code to App Service."
+      echo ""
+      echo "  -h, --help     Show this help message."
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $arg"
+      echo "Run '$0 --help' for usage."
+      exit 1
+      ;;
+  esac
+done
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Colors & helpers
@@ -43,18 +77,33 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # ─────────────────────────────────────────────────────────────────────────────
 header "ACS WhatsApp Demos — Deployment Script"
 
-echo -e "This script will:"
-echo -e "  1. Create an Azure Resource Group"
-echo -e "  2. Create an Azure Communication Services resource"
-echo -e "  3. Create an Azure Cosmos DB account, database, and container"
-echo -e "  4. Create an Azure AI Search service with indexes and sample data"
-echo -e "  5. Create an Azure AI Foundry hub and project"
-echo -e "  6. Deploy a GPT-4o model"
-echo -e "  7. Create 6 AI Foundry agents (triage + 5 specialists)"
-echo -e "  8. Configure RBAC permissions"
-echo -e "  9. Generate the backend/.env file"
-echo -e " 10. (Optional) Deploy to Azure App Service"
-echo -e " 11. Install npm dependencies"
+if [ "$USE_TERRAFORM" = true ]; then
+  echo -e "${BOLD}Mode: Terraform (--terraform)${NC}"
+  echo -e "Infrastructure is expected to be already provisioned via Terraform."
+  echo -e ""
+  echo -e "This script will:"
+  echo -e "  1. Read resource details from Terraform outputs"
+  echo -e "  2. Create Azure AI Search indexes and upload sample data"
+  echo -e "  3. Create 6 AI Foundry agents (triage + 5 specialists)"
+  echo -e "  4. Generate the backend/.env file"
+  echo -e "  5. (Optional) Deploy code to Azure App Service"
+  echo -e "  6. Install npm dependencies"
+else
+  echo -e "${BOLD}Mode: Full deployment${NC}"
+  echo -e ""
+  echo -e "This script will:"
+  echo -e "  1. Create an Azure Resource Group"
+  echo -e "  2. Create an Azure Communication Services resource"
+  echo -e "  3. Create an Azure Cosmos DB account, database, and container"
+  echo -e "  4. Create an Azure AI Search service with indexes and sample data"
+  echo -e "  5. Create an Azure AI Foundry hub and project"
+  echo -e "  6. Deploy a GPT-4o model"
+  echo -e "  7. Create 6 AI Foundry agents (triage + 5 specialists)"
+  echo -e "  8. Configure RBAC permissions"
+  echo -e "  9. Generate the backend/.env file"
+  echo -e " 10. (Optional) Deploy to Azure App Service"
+  echo -e " 11. Install npm dependencies"
+fi
 echo ""
 
 step "Checking prerequisites"
@@ -64,6 +113,10 @@ command -v az  >/dev/null 2>&1 || MISSING+=("az (Azure CLI)")
 command -v jq  >/dev/null 2>&1 || MISSING+=("jq")
 command -v node >/dev/null 2>&1 || MISSING+=("node (Node.js 20+)")
 command -v npm  >/dev/null 2>&1 || MISSING+=("npm")
+
+if [ "$USE_TERRAFORM" = true ]; then
+  command -v terraform >/dev/null 2>&1 || MISSING+=("terraform (Terraform >= 1.5)")
+fi
 
 if [ ${#MISSING[@]} -gt 0 ]; then
   error "Missing required tools: ${MISSING[*]}"
@@ -88,12 +141,102 @@ info "Subscription: ${BOLD}$CURRENT_SUB${NC}"
 echo ""
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Gather user inputs
+# Gather configuration
 # ─────────────────────────────────────────────────────────────────────────────
 header "Configuration"
 
-echo "Please provide the following values. Press Enter to accept defaults (shown in brackets)."
-echo ""
+if [ "$USE_TERRAFORM" = true ]; then
+  # ── Read values from Terraform outputs ──
+  INFRA_DIR="$PROJECT_ROOT/infra"
+  if [ ! -d "$INFRA_DIR" ]; then
+    error "infra/ directory not found. Run 'terraform apply' in the infra/ folder first."
+    exit 1
+  fi
+
+  info "Reading Terraform outputs from infra/ ..."
+  pushd "$INFRA_DIR" > /dev/null
+
+  # Validate that Terraform state exists
+  if ! terraform output resource_group_name >/dev/null 2>&1; then
+    error "Could not read Terraform outputs. Make sure 'terraform apply' completed successfully."
+    popd > /dev/null
+    exit 1
+  fi
+
+  RG_NAME=$(terraform output -raw resource_group_name)
+  ACS_CONNECTION_STRING=$(terraform output -raw acs_connection_string)
+  COSMOS_CONNECTION_STRING=$(terraform output -raw cosmos_connection_string)
+  COSMOS_ENDPOINT=$(terraform output -raw cosmos_endpoint)
+  SEARCH_ENDPOINT=$(terraform output -raw search_endpoint)
+  SEARCH_KEY=$(terraform output -raw search_admin_key)
+  AI_SERVICES_ENDPOINT=$(terraform output -raw ai_services_endpoint)
+  AI_PROJECT_ID=$(terraform output -raw ai_project_id)
+
+  # Read App Service outputs if available
+  APP_SERVICE_URL=$(terraform output -raw app_service_url 2>/dev/null || echo "")
+  APP_IDENTITY=$(terraform output -raw app_service_principal_id 2>/dev/null || echo "")
+
+  popd > /dev/null
+
+  # Read terraform.tfvars or variables.tf defaults for resource names
+  # These are needed for Azure CLI commands (agents, indexes, etc.)
+  _tf_var() {
+    # Try terraform.tfvars first, then fall back to terraform output / hardcoded default
+    local VAR_NAME="$1"
+    local DEFAULT="$2"
+    local VALUE
+    VALUE=$(cd "$INFRA_DIR" && terraform console -no-color <<< "var.${VAR_NAME}" 2>/dev/null | tr -d '"' || echo "")
+    if [ -z "$VALUE" ] || [ "$VALUE" = "" ]; then
+      echo "$DEFAULT"
+    else
+      echo "$VALUE"
+    fi
+  }
+
+  LOCATION=$(_tf_var "location" "eastus2")
+  ACS_NAME=$(_tf_var "acs_name" "acs-whatsapp-demo")
+  COSMOS_ACCOUNT=$(_tf_var "cosmos_account_name" "cosmos-whatsapp-demo")
+  COSMOS_DB_NAME=$(_tf_var "cosmos_database_name" "whatsapp-agents")
+  COSMOS_CONTAINER_NAME=$(_tf_var "cosmos_container_name" "conversations")
+  SEARCH_NAME=$(_tf_var "search_name" "search-whatsapp-demo")
+  AI_HUB_NAME=$(_tf_var "ai_hub_name" "hub-whatsapp-demo")
+  AI_PROJECT_NAME=$(_tf_var "ai_project_name" "proj-whatsapp-demo")
+  MODEL_DEPLOYMENT_NAME=$(_tf_var "model_deployment_name" "gpt-4o")
+  COMPANY_NAME=$(_tf_var "company_name" "Contoso Education")
+  PORT=$(_tf_var "app_port" "3000")
+  DEPLOY_APP_SERVICE_TF=$(_tf_var "deploy_app_service" "true")
+  APP_NAME=$(_tf_var "app_name" "app-whatsapp-demo")
+  APP_SERVICE_SKU=$(_tf_var "app_service_plan_sku" "B1")
+
+  # Map Terraform bool to script's y/n
+  if [ "$DEPLOY_APP_SERVICE_TF" = "true" ]; then
+    DEPLOY_APP_SERVICE="y"
+  else
+    DEPLOY_APP_SERVICE="n"
+  fi
+
+  # WhatsApp Channel Registration ID (always manual)
+  echo ""
+  warn "MANUAL STEP: WhatsApp Channel Registration ID is not managed by Terraform."
+  read -rp "$(echo -e "${CYAN}Enter your WhatsApp Channel Registration ID (or press Enter to set later): ${NC}")" ACS_CHANNEL_REG_ID
+  ACS_CHANNEL_REG_ID="${ACS_CHANNEL_REG_ID:-<your-whatsapp-channel-registration-id>}"
+
+  success "Terraform outputs loaded."
+
+  # Resolve AI Project endpoint from the AI Services endpoint
+  if [[ "$AI_SERVICES_ENDPOINT" == *"services.ai.azure.com"* ]] || [[ "$AI_SERVICES_ENDPOINT" == *"cognitiveservices"* ]]; then
+    # Extract the AI services hostname to build project endpoint
+    AISERVICES_HOST=$(echo "$AI_SERVICES_ENDPOINT" | sed 's|https://||' | sed 's|/.*||')
+    AI_PROJECT_ENDPOINT="https://${AISERVICES_HOST}/api/projects/${AI_PROJECT_NAME}"
+  else
+    AI_PROJECT_ENDPOINT="${AI_SERVICES_ENDPOINT}/api/projects/${AI_PROJECT_NAME}"
+  fi
+  info "AI Project endpoint: $AI_PROJECT_ENDPOINT"
+
+else
+  # ── Interactive mode: prompt for all values ──
+  echo "Please provide the following values. Press Enter to accept defaults (shown in brackets)."
+  echo ""
 
 # Resource group
 read -rp "$(echo -e "${CYAN}Resource Group name${NC} [rg-whatsapp-demo]: ")" RG_NAME
@@ -150,6 +293,8 @@ if [[ "$DEPLOY_APP_SERVICE" == "y" ]]; then
   APP_SERVICE_SKU="${APP_SERVICE_SKU:-B1}"
 fi
 
+fi  # end if USE_TERRAFORM / interactive mode
+
 echo ""
 step "Configuration summary"
 echo "  Resource Group:    $RG_NAME"
@@ -181,6 +326,19 @@ if [ -z "$PRINCIPAL_ID" ]; then
   warn "Could not determine user principal ID. RBAC assignments may need manual setup."
 fi
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Steps 1–3, 5–6, 8: Infrastructure (skipped when --terraform is used)
+# ─────────────────────────────────────────────────────────────────────────────
+if [ "$USE_TERRAFORM" = true ]; then
+  header "Skipping infrastructure steps (1–3, 5–6, 8) — handled by Terraform"
+  info "Resource Group:    $RG_NAME"
+  info "ACS:               $ACS_NAME"
+  info "Cosmos DB:         $COSMOS_ACCOUNT"
+  info "AI Search:         $SEARCH_NAME"
+  info "AI Hub:            $AI_HUB_NAME"
+  info "AI Project:        $AI_PROJECT_NAME"
+  info "Model:             $MODEL_DEPLOYMENT_NAME"
+else
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Resource Group
 # ─────────────────────────────────────────────────────────────────────────────
@@ -305,32 +463,40 @@ if [ -n "$PRINCIPAL_ID" ]; then
   success "Cosmos DB RBAC configured."
 fi
 
+fi  # end if USE_TERRAFORM (steps 1-3)
+
 # ─────────────────────────────────────────────────────────────────────────────
-# 4. Azure AI Search
+# 4. Azure AI Search — Service creation (infra) + Indexes/Data (post-infra)
 # ─────────────────────────────────────────────────────────────────────────────
 header "Step 4/10 — Azure AI Search"
 
-if az search service show --name "$SEARCH_NAME" --resource-group "$RG_NAME" >/dev/null 2>&1; then
-  info "AI Search service '$SEARCH_NAME' already exists, skipping creation."
-else
-  info "Creating AI Search service '$SEARCH_NAME' (Basic sku)..."
-  az search service create \
-    --name "$SEARCH_NAME" \
-    --resource-group "$RG_NAME" \
-    --sku basic \
-    --location "$LOCATION" \
-    -o none
-  success "AI Search service created."
-fi
+if [ "$USE_TERRAFORM" != true ]; then
+  # Create the AI Search service (skipped when using Terraform)
+  if az search service show --name "$SEARCH_NAME" --resource-group "$RG_NAME" >/dev/null 2>&1; then
+    info "AI Search service '$SEARCH_NAME' already exists, skipping creation."
+  else
+    info "Creating AI Search service '$SEARCH_NAME' (Basic sku)..."
+    az search service create \
+      --name "$SEARCH_NAME" \
+      --resource-group "$RG_NAME" \
+      --sku basic \
+      --location "$LOCATION" \
+      -o none
+    success "AI Search service created."
+  fi
 
-# Get search admin key
-info "Retrieving AI Search admin key..."
-SEARCH_KEY=$(az search admin-key show \
-  --service-name "$SEARCH_NAME" \
-  --resource-group "$RG_NAME" \
-  --query "primaryKey" -o tsv)
-SEARCH_ENDPOINT="https://${SEARCH_NAME}.search.windows.net"
-success "AI Search endpoint: $SEARCH_ENDPOINT"
+  # Get search admin key
+  info "Retrieving AI Search admin key..."
+  SEARCH_KEY=$(az search admin-key show \
+    --service-name "$SEARCH_NAME" \
+    --resource-group "$RG_NAME" \
+    --query "primaryKey" -o tsv)
+  SEARCH_ENDPOINT="https://${SEARCH_NAME}.search.windows.net"
+  success "AI Search endpoint: $SEARCH_ENDPOINT"
+else
+  info "AI Search service provisioned by Terraform."
+  info "AI Search endpoint: $SEARCH_ENDPOINT"
+fi
 
 # ── Create indexes ──
 step "Creating AI Search indexes"
@@ -421,6 +587,7 @@ curl -s -X POST "$SEARCH_ENDPOINT/indexes/fees-index/docs/index?api-version=2024
   -d @"$DATA_DIR/fees-search.json" -o /dev/null
 success "Fees data uploaded (12 records)."
 
+if [ "$USE_TERRAFORM" != true ]; then
 # ─────────────────────────────────────────────────────────────────────────────
 # 5. Azure AI Foundry Hub + Project
 # ─────────────────────────────────────────────────────────────────────────────
@@ -552,6 +719,15 @@ else
   echo "  Go to: AI Foundry → your project → Deployments → Deploy model → gpt-4o"
 fi
 success "Model deployment step complete."
+
+fi  # end if USE_TERRAFORM != true (steps 5-6)
+
+# Ensure az ml extension is available for agent creation (needed in both modes)
+if ! az extension show --name ml >/dev/null 2>&1; then
+  info "Installing Azure ML CLI extension..."
+  az extension add --name ml --yes -o none 2>/dev/null
+  success "ML extension installed."
+fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 7. Create AI Foundry Agents
@@ -964,33 +1140,38 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 8. RBAC
+# 8. RBAC (skipped when --terraform is used — Terraform handles RBAC)
 # ─────────────────────────────────────────────────────────────────────────────
-header "Step 8/10 — RBAC Configuration"
-
-if [ -n "$PRINCIPAL_ID" ]; then
-  # Get subscription ID
-  SUB_ID=$(az account show --query id -o tsv)
-
-  info "Assigning 'Azure AI Developer' role on AI project..."
-  az role assignment create \
-    --assignee "$PRINCIPAL_ID" \
-    --role "Azure AI Developer" \
-    --scope "/subscriptions/${SUB_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.MachineLearningServices/workspaces/${AI_PROJECT_NAME}" \
-    -o none 2>/dev/null || info "Role already assigned or applied."
-  success "AI Developer role assigned."
-
-  info "Assigning 'Cognitive Services OpenAI User' role..."
-  az role assignment create \
-    --assignee "$PRINCIPAL_ID" \
-    --role "Cognitive Services OpenAI User" \
-    --scope "/subscriptions/${SUB_ID}/resourceGroups/${RG_NAME}" \
-    -o none 2>/dev/null || info "Role already assigned or applied."
-  success "Cognitive Services role assigned."
+if [ "$USE_TERRAFORM" = true ]; then
+  header "Step 8/10 — RBAC Configuration (handled by Terraform)"
+  info "RBAC role assignments were provisioned by Terraform. Skipping."
 else
-  warn "Could not determine your principal ID. Please assign roles manually:"
-  echo "  az role assignment create --assignee <your-principal-id> --role 'Azure AI Developer' --scope <project-scope>"
-  echo "  az role assignment create --assignee <your-principal-id> --role 'Cognitive Services OpenAI User' --scope <rg-scope>"
+  header "Step 8/10 — RBAC Configuration"
+
+  if [ -n "$PRINCIPAL_ID" ]; then
+    # Get subscription ID
+    SUB_ID=$(az account show --query id -o tsv)
+
+    info "Assigning 'Azure AI Developer' role on AI project..."
+    az role assignment create \
+      --assignee "$PRINCIPAL_ID" \
+      --role "Azure AI Developer" \
+      --scope "/subscriptions/${SUB_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.MachineLearningServices/workspaces/${AI_PROJECT_NAME}" \
+      -o none 2>/dev/null || info "Role already assigned or applied."
+    success "AI Developer role assigned."
+
+    info "Assigning 'Cognitive Services OpenAI User' role..."
+    az role assignment create \
+      --assignee "$PRINCIPAL_ID" \
+      --role "Cognitive Services OpenAI User" \
+      --scope "/subscriptions/${SUB_ID}/resourceGroups/${RG_NAME}" \
+      -o none 2>/dev/null || info "Role already assigned or applied."
+    success "Cognitive Services role assigned."
+  else
+    warn "Could not determine your principal ID. Please assign roles manually:"
+    echo "  az role assignment create --assignee <your-principal-id> --role 'Azure AI Developer' --scope <project-scope>"
+    echo "  az role assignment create --assignee <your-principal-id> --role 'Cognitive Services OpenAI User' --scope <rg-scope>"
+  fi
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1215,7 +1396,11 @@ success "Dependencies installed."
 # ─────────────────────────────────────────────────────────────────────────────
 header "Deployment Complete!"
 
-echo -e "${GREEN}Azure resources created:${NC}"
+if [ "$USE_TERRAFORM" = true ]; then
+  echo -e "${GREEN}Infrastructure provisioned by Terraform.${NC}"
+else
+  echo -e "${GREEN}Azure resources created:${NC}"
+fi
 echo "  • Resource Group:    $RG_NAME"
 echo "  • ACS:               $ACS_NAME"
 echo "  • Cosmos DB:         $COSMOS_ACCOUNT (db: $COSMOS_DB_NAME, container: $COSMOS_CONTAINER_NAME)"

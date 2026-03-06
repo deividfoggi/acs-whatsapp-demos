@@ -1,0 +1,37 @@
+# =============================================================================
+# Example variable values — copy to terraform.tfvars and customise
+# =============================================================================
+
+resource_group_name = "acs-whatsapp-demo-rg"
+location            = "eastus2"
+
+# ── ACS
+acs_name          = "acs-whatsapp-demo"
+acs_data_location = "unitedstates"
+
+# ── Cosmos DB
+cosmos_account_name  = "cosmos-whatsapp-demo"
+cosmos_database_name = "whatsapp-agents"
+cosmos_container_name = "conversations"
+cosmos_throughput    = 400
+
+# ── AI Search
+search_name = "search-whatsapp-demo"
+search_sku  = "basic"
+
+# ── AI Foundry
+ai_hub_name           = "hub-whatsapp-demo"
+ai_project_name       = "proj-whatsapp-demo"
+model_deployment_name = "gpt-4o"
+model_version         = "2024-08-06"
+model_sku_capacity    = 30
+
+# ── App Service (set deploy_app_service = false to skip)
+deploy_app_service   = true
+app_service_plan_sku = "B1"
+app_name             = "app-whatsapp-demo"   # must be globally unique
+node_version         = "20-lts"
+
+# ── Application
+company_name = "Contoso Education"
+app_port     = 3000

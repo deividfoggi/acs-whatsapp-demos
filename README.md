@@ -2,6 +2,46 @@
 
 WhatsApp use case demos powered by [Azure Communication Services Advanced Messaging](https://learn.microsoft.com/en-us/azure/communication-services/concepts/advanced-messaging/whatsapp/whatsapp-overview). Parents and guardians interact with the school system via WhatsApp. The company/organization name displayed in the UI is configured via the `COMPANY_NAME` environment variable.
 
+## Table of Contents
+
+- [Use Cases](#use-cases)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick Deploy (Recommended)](#quick-deploy-recommended)
+  - [Prerequisites](#prerequisites)
+  - [Run the Script](#run-the-script)
+  - [After the Script](#after-the-script)
+- [Infrastructure as Code (Terraform)](#infrastructure-as-code-terraform)
+  - [Resources Provisioned](#resources-provisioned)
+  - [Terraform Prerequisites](#terraform-prerequisites)
+  - [Deploy with Terraform](#deploy-with-terraform)
+  - [Post-Deployment Manual Steps](#post-deployment-manual-steps)
+  - [Terraform Customisation](#terraform-customisation)
+  - [Terraform File Structure](#terraform-file-structure)
+  - [Destroying Resources](#destroying-resources)
+- [Manual Setup](#manual-setup)
+  - [1. Prerequisites](#1-prerequisites)
+  - [2. Set Up Meta Business Account, WhatsApp Number & ACS](#2-set-up-meta-business-account-whatsapp-number--acs)
+  - [3. Clone the Repository](#3-clone-the-repository)
+  - [4. Install Dependencies](#4-install-dependencies)
+  - [5. Configure Environment Variables](#5-configure-environment-variables)
+  - [6. Start the Backend Server](#6-start-the-backend-server)
+  - [7. Expose the Local Server with VS Code Port Forwarding](#7-expose-the-local-server-with-vs-code-port-forwarding)
+  - [8. Configure the Event Grid Webhook](#8-configure-the-event-grid-webhook)
+  - [9. Deploy to Azure App Service (Optional — Production)](#9-deploy-to-azure-app-service-optional--production)
+  - [10. Run the Demo Scenarios](#10-run-the-demo-scenarios)
+- [AI Layer Setup](#ai-layer-setup)
+  - [Architecture Overview](#architecture-overview)
+  - [Set Up Azure Cosmos DB](#set-up-azure-cosmos-db)
+  - [Set Up Azure AI Foundry Agents](#set-up-azure-ai-foundry-agents)
+  - [How the AI Flow Works](#how-the-ai-flow-works)
+- [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
+- [Copilot Agents](#copilot-agents)
+- [Troubleshooting](#troubleshooting)
+
+---
+
 ## Use Cases
 
 | # | Use Case | Status |
@@ -83,6 +123,117 @@ The script will:
    - Events: `AdvancedMessageReceived`, `AdvancedMessageDeliveryStatusUpdated`
 
 5. **Open the demo**: [http://localhost:3000/](http://localhost:3000/) or `https://<your-app>.azurewebsites.net/`
+
+---
+
+## Infrastructure as Code (Terraform)
+
+> **Alternative to Quick Deploy.** Use this path if you prefer to provision Azure resources via Terraform so that anyone can clone the repo and deploy the infrastructure reproducibly.
+
+The `infra/` folder contains Terraform configuration for all required Azure resources. After Terraform provisions the infrastructure, run the deploy script with `--terraform` to create AI Search indexes, seed sample data, create AI Foundry agents, and generate the `.env` file.
+
+### Resources Provisioned
+
+| Resource | File | Purpose |
+|----------|------|---------|
+| Resource Group | `infra/main.tf` | Container for all resources |
+| Azure Communication Services | `infra/acs.tf` | WhatsApp messaging via ACS Advanced Messaging |
+| Cosmos DB (NoSQL) | `infra/cosmos.tf` | Conversation thread state persistence |
+| Azure AI Search | `infra/ai-search.tf` | Knowledge retrieval indexes for RAG agents |
+| AI Foundry Hub + Project | `infra/ai-foundry.tf` | Agent orchestration with GPT-4o |
+| AI Services + GPT-4o deployment | `infra/ai-foundry.tf` | LLM backend |
+| App Service (optional) | `infra/app-service.tf` | Node.js 20 hosting for the Express backend |
+| Event Grid | `infra/event-grid.tf` | Webhook subscription for ACS message events |
+| RBAC role assignments | `infra/rbac.tf` | Least-privilege access for managed identities |
+
+### Terraform Prerequisites
+
+- [Terraform >= 1.5](https://developer.hashicorp.com/terraform/install)
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) logged in (`az login`)
+- [jq](https://jqlang.github.io/jq/download/) JSON processor
+- [Node.js v20+](https://nodejs.org/) and npm
+- An Azure subscription with permissions to create resources
+
+### Deploy with Terraform
+
+```bash
+cd infra
+
+# 1. Copy and customise the variables
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars — at minimum change resource names to be globally unique
+
+# 2. Initialise Terraform
+terraform init
+
+# 3. Preview what will be created
+terraform plan
+
+# 4. Deploy infrastructure
+terraform apply
+
+# 5. Go back to project root and run the deploy script in Terraform mode
+cd ..
+./scripts/deploy.sh --terraform
+```
+
+The `--terraform` flag tells the script to:
+- **Skip** creating Azure resources (steps 1–3, 5–6, 8 — already handled by Terraform)
+- **Read** resource names and connection strings from Terraform outputs automatically
+- **Create** AI Search indexes and upload sample data
+- **Create** all 6 AI Foundry agents (triage + 5 specialists)
+- **Generate** the `backend/.env` file with all connection strings and agent IDs
+- **(Optional)** Deploy code to Azure App Service (if `deploy_app_service = true` in your Terraform config)
+- **Install** npm dependencies
+
+### Post-Deployment Manual Steps
+
+After running `terraform apply` + `./scripts/deploy.sh --terraform`, the only remaining manual step is:
+
+#### Connect WhatsApp Business Account to ACS
+
+1. Go to **Azure Portal → ACS resource → Channels → WhatsApp**
+2. Complete the Meta Embedded Signup flow
+3. Copy the **Channel Registration ID** (GUID)
+4. Update `ACS_CHANNEL_REGISTRATION_ID` in `backend/.env` and (if deployed) App Service settings
+
+Then follow the same post-deploy steps as [Quick Deploy](#after-the-script): start the server, set up Event Grid webhooks, and open the demo UI.
+
+### Terraform Customisation
+
+**Skip App Service** — if you only want the backend services (no hosting):
+
+```hcl
+deploy_app_service = false
+```
+
+**Remote State** — for team collaboration, uncomment and configure the `backend "azurerm"` block in `infra/main.tf`.
+
+### Terraform File Structure
+
+```
+infra/
+  main.tf                   — Provider, resource group, locals
+  variables.tf              — Input variables with defaults
+  outputs.tf                — Output values (connection strings, endpoints)
+  acs.tf                    — Azure Communication Services
+  cosmos.tf                 — Cosmos DB account, database, container, RBAC
+  ai-search.tf              — Azure AI Search service
+  ai-foundry.tf             — AI Hub, Project, AI Services, GPT-4o deployment
+  app-service.tf            — App Service Plan + Web App (optional)
+  event-grid.tf             — Event Grid system topic + webhook subscription
+  rbac.tf                   — Role assignments for managed identities
+  terraform.tfvars.example  — Example variable values
+```
+
+### Destroying Resources
+
+```bash
+cd infra
+terraform destroy
+```
+
+This removes all Azure resources created by this configuration.
 
 ---
 

@@ -17,3 +17,5 @@ crash.*.log
 
 # Plan files
 *.tfplan
+
+drawio.bkp

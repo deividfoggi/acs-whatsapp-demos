@@ -22,6 +22,7 @@ WhatsApp use case demos powered by [Azure Communication Services Advanced Messag
 - [Manual Setup](#manual-setup)
   - [1. Prerequisites](#1-prerequisites)
   - [2. Set Up Meta Business Account, WhatsApp Number & ACS](#2-set-up-meta-business-account-whatsapp-number--acs)
+    - [Using a Fixed (Landline) Phone Number with Call Verification](#using-a-fixed-landline-phone-number-with-call-verification)
   - [3. Clone the Repository](#3-clone-the-repository)
   - [4. Install Dependencies](#4-install-dependencies)
   - [5. Configure Environment Variables](#5-configure-environment-variables)
@@ -280,19 +281,30 @@ This step connects a WhatsApp Business phone number to your Azure Communication 
 
 #### 2c. Connect WhatsApp to ACS and Register a Phone Number
 
+Follow the steps below to connect a WhatsApp Business phone number to your ACS resource. For a detailed walkthrough with screenshots, see the official guide: [Connect a WhatsApp Business Account to Azure Communication Services](https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/advanced-messaging/whatsapp/connect-whatsapp-business-account).
+
 1. In the **Azure Portal**, open your ACS resource.
 2. Go to **Channels** → **WhatsApp** in the left menu.
 3. Click **Connect** to start the WhatsApp Business Account connection wizard.
 4. You will be redirected to Meta's **Embedded Signup** flow:
    - Sign in to your Meta Business Account.
    - Create a new **WhatsApp Business Account** (or select an existing one).
-   - **Register a phone number** — you can use a new number or Meta's free test number. This is the number that will appear as the sender when the business sends messages.
+   - **Register a phone number** — this is the number that will appear as the sender when the business sends WhatsApp messages. See the section below for details on which numbers you can use.
    - Accept the WhatsApp Business Terms of Service.
 5. After completing the Meta flow, you are redirected back to the Azure Portal.
 6. The WhatsApp channel now appears under **Channels** with a **Channel Registration ID** (a GUID).
 7. Copy the **Channel Registration ID** — you will need it for the `.env` file.
 
-> **Tip:** For a detailed walkthrough with screenshots, see the official guide: [Connect a WhatsApp Business Account to Azure Communication Services](https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/advanced-messaging/whatsapp/connect-whatsapp-business-account).
+#### Using a Fixed (Landline) Phone Number with Call Verification
+
+You do **not** need a mobile phone number or SIM card to run this demo. Meta allows you to register a **fixed/landline phone number** and verify it via an **automated phone call** instead of SMS. This is useful when you want a dedicated business number that is not tied to a personal mobile device.
+
+1. During the Embedded Signup flow (step 4 above), when prompted to register a phone number, enter your **fixed/landline number** in E.164 format (e.g., `+551140042345`).
+2. On the verification method screen, select **Phone call** instead of **SMS**. Meta will place an automated call to the number and read out a verification code.
+3. Enter the verification code to complete the registration.
+4. Continue with steps 5–7 above as normal.
+
+> **Important:** The phone number you register must be able to receive incoming calls. It cannot already be registered with another WhatsApp account (personal or business). If it is, you must first delete the existing WhatsApp account associated with that number before registering it here.
 
 ### 3. Clone the Repository
 
